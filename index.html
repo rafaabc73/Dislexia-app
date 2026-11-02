@@ -14,20 +14,29 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Dislexia App" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="manifest" href="./public/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="./public/icon.svg" />
+    <link rel="apple-touch-icon" href="./public/icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Folha de estilo pré-compilada para funcionar ao abrir o index.html direto com 2 cliques -->
+    <link rel="stylesheet" href="./dist/app.css" />
     <title>Dislexia App — Estudo Limpo e Focado</title>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Permite abrir o index.html diretamente com 2 cliques (protocolo file://) sem precisar de servidor
+      if (window.location.protocol === 'file:') {
+        var standaloneScript = document.createElement('script');
+        standaloneScript.src = './dist/app.js';
+        document.body.appendChild(standaloneScript);
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
