@@ -1,0 +1,19 @@
+{
+  "name": "Dislexia App — Estudo Focado & Acessível",
+  "short_name": "Dislexia App",
+  "description": "Plataforma de estudo adaptada para crianças e adolescentes com dislexia, TDA e TDAH.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
