@@ -23,22 +23,55 @@ export type FunctionType =
   | 'prova_interativa'
   | 'demonstracao_pratica';
 
+export type ContentLengthOption = 'curto' | 'medio' | 'longo';
+export type QuantityOption = 'menos' | 'padrao' | 'mais';
+export type DifficultyOption = 'facil' | 'medio' | 'dificil';
+export type ImageInclusionOption = 'com_imagens' | 'sem_imagens';
+
+export type AudioSummaryStyle =
+  | 'analise_detalhada'
+  | 'resumo'
+  | 'critica'
+  | 'debate';
+
+export type PresentationStyle = 'muito_detalhado' | 'resumido';
+export type VideoSummaryStyle = 'demonstrativo' | 'explicativo';
+export type ReportStyle = 'descritivo_texto' | 'interativo_com_imagens';
+export type QuizQuestionType =
+  | 'multipla_escolha'
+  | 'multiplas_corretas'
+  | 'preencher_lacuna'
+  | 'verdadeiro_falso';
+
+export interface FunctionCustomizationOptions {
+  length?: ContentLengthOption;
+  customPrompt?: string;
+  audioStyle?: AudioSummaryStyle;
+  presentationStyle?: PresentationStyle;
+  videoStyle?: VideoSummaryStyle;
+  reportStyle?: ReportStyle;
+  quantity?: QuantityOption;
+  difficulty?: DifficultyOption;
+  includeImages?: ImageInclusionOption;
+  quizQuestionType?: QuizQuestionType;
+}
+
 export interface StudyDocument {
   id: string;
   title: string;
   fileName: string;
   fileType: 'pdf' | 'image' | 'text';
   mimeType: string;
-  dataUrl?: string; // base64 for image or PDF
+  dataUrl?: string;
   extractedText: string;
-  year: string; // e.g., "2026 - 7º Ano"
-  subjectId: string; // e.g., "portugues", "matematica", "informacoes_gerais"
-  month: number; // 1 to 12
-  isExam: boolean; // true if placed in "Provas" subfolder
-  createdAt: string; // ISO date string
-  formattedDate: string; // DD/MM/YYYY
-  grade?: string; // Optional score if exam or report card
-  studentAnswers?: string; // Optional student answers for Correction module
+  year: string;
+  subjectId: string;
+  month: number;
+  isExam: boolean;
+  createdAt: string;
+  formattedDate: string;
+  grade?: string;
+  studentAnswers?: string;
 }
 
 export interface GeneratedArtifact {
@@ -48,11 +81,23 @@ export interface GeneratedArtifact {
   sourceDocIds: string[];
   subjectId: string;
   createdAt: string;
+  optionsUsed?: FunctionCustomizationOptions;
   content: {
     summaryText?: string;
+    reportSections?: Array<{
+      heading: string;
+      body: string;
+      imageCaption?: string;
+      visualSvgTopic?: string;
+    }>;
     audioScript?: string;
-    dialogueLines?: Array<{ speaker: 'Professor(a) Sofia' | 'Lucas (Monitor)'; text: string }>;
-    slides?: Array<{ title: string; bullets: string[]; visualHint: string; narration: string }>;
+    dialogueLines?: Array<{ speaker: string; text: string }>;
+    slides?: Array<{
+      title: string;
+      bullets: string[];
+      visualHint: string;
+      narration: string;
+    }>;
     mindMap?: {
       centralTopic: string;
       branches: Array<{
@@ -61,16 +106,31 @@ export interface GeneratedArtifact {
         items: string[];
       }>;
     };
-    flashcards?: Array<{ front: string; back: string; tip?: string }>;
+    flashcards?: Array<{
+      front: string;
+      back: string;
+      tip?: string;
+      imageCaption?: string;
+    }>;
     quizQuestions?: Array<{
+      questionType?: QuizQuestionType;
       question: string;
       options: string[];
       correctIndex: number;
+      correctIndices?: number[];
+      blankAnswer?: string;
+      booleanAnswer?: boolean;
       explanation: string;
+      imageCaption?: string;
     }>;
     infographic?: {
       subtitle: string;
-      steps: Array<{ number: string; title: string; description: string; highlight: string }>;
+      steps: Array<{
+        number: string;
+        title: string;
+        description: string;
+        highlight: string;
+      }>;
     };
     dataTable?: {
       headers: string[];
@@ -81,6 +141,7 @@ export interface GeneratedArtifact {
       question: string;
       expectedKeyPoints: string[];
       hint: string;
+      imageCaption?: string;
       userAnswer?: string;
       aiFeedback?: string;
       score?: string;
@@ -110,7 +171,7 @@ export interface AgendaItem {
   id: string;
   title: string;
   subjectId: string;
-  dueDate: string; // YYYY-MM-DD
+  dueDate: string;
   type: 'tarefa' | 'prova' | 'trabalho' | 'lembrete';
   description: string;
   completed: boolean;
@@ -151,7 +212,10 @@ export interface ExamCorrection {
     whatWasWrong: string;
     whatIsCorrect: string;
     stepByStepExplanation: string;
-    dialogue: Array<{ speaker: 'Tutor IA' | 'Como Pensar na Hora'; text: string }>;
+    dialogue: Array<{
+      speaker: 'Tutor IA' | 'Como Pensar na Hora';
+      text: string;
+    }>;
   }>;
 }
 
@@ -169,10 +233,9 @@ export interface AppSettings {
   geminiModel: string;
   currentSchoolYear: string;
   fontFamily: 'Lexend' | 'Inter';
-  fontSize: number; // 15 to 22
-  lineHeight: number; // 1.5 to 2.2
-  letterSpacing: number; // 0 to 0.08
+  fontSize: number;
+  lineHeight: number;
+  letterSpacing: number;
   readingRulerEnabled: boolean;
-  speechRate: number; // 0.8 to 1.3
+  speechRate: number;
 }
-

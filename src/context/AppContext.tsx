@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   ActivityTab,
   MobilePane,
+  FunctionType,
   StudyDocument,
   GeneratedArtifact,
   BoardCopyItem,
@@ -54,8 +55,10 @@ interface AppContextType {
   // Seleção múltipla de arquivos para as Funções (permite marcar arquivos de meses diferentes)
   selectedFunctionDocIds: string[];
   setSelectedFunctionDocIds: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedFunctionType: FunctionType | null;
+  setSelectedFunctionType: (fn: FunctionType | null) => void;
 
-  // Artefatos gerados nas Funções (NotebookLM + Extras)
+  // Artefatos gerados nas Funções
   artifacts: GeneratedArtifact[];
   addArtifact: (art: GeneratedArtifact) => void;
   updateArtifact: (art: GeneratedArtifact) => void;
@@ -124,6 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [documents, setDocuments] = useState<StudyDocument[]>(INITIAL_DOCUMENTS);
   const [selectedDocument, setSelectedDocument] = useState<StudyDocument | null>(null);
   const [selectedFunctionDocIds, setSelectedFunctionDocIds] = useState<string[]>([]);
+  const [selectedFunctionType, setSelectedFunctionType] = useState<FunctionType | null>(null);
 
   const [artifacts, setArtifacts] = useState<GeneratedArtifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<GeneratedArtifact | null>(null);
@@ -163,6 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveTabState(tab);
     // Quando o usuário clicar em Funções, a segunda tela mais à direita fica vazia até ele clicar numa função específica
     if (tab === 'funcoes') {
+      setSelectedFunctionType(null);
       setActiveArtifact(null);
     }
   };
@@ -450,6 +455,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedDocument,
         selectedFunctionDocIds,
         setSelectedFunctionDocIds,
+        selectedFunctionType,
+        setSelectedFunctionType,
         artifacts,
         addArtifact,
         updateArtifact,

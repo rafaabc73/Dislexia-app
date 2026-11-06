@@ -1,6 +1,7 @@
 import {
   StudyDocument,
   FunctionType,
+  FunctionCustomizationOptions,
   GeneratedArtifact,
   BoardCopyItem,
   AgendaItem,
@@ -160,32 +161,67 @@ export async function generateStudyFunction(
   functionType: FunctionType,
   docs: StudyDocument[],
   apiKey: string,
-  model: string
+  model: string,
+  options: FunctionCustomizationOptions = {}
 ): Promise<GeneratedArtifact['content']> {
   const combinedTitle = docs.map((d) => d.title).join(' + ');
   const combinedText = docs
     .map((d) => `--- DOCUMENTO: ${d.title} ---\n${d.extractedText}`)
     .join('\n\n');
 
+  const countMap = { menos: 3, padrao: 5, mais: 8 };
+  const targetCount = countMap[options.quantity || 'padrao'] || 5;
+  const lengthLabel =
+    options.length === 'curto'
+      ? 'CURTO (direto e conciso)'
+      : options.length === 'longo'
+        ? 'LONGO (aprofundado e completo)'
+        : 'MÉDIO (equilibrado)';
+  const diffLabel =
+    options.difficulty === 'facil'
+      ? 'FÁCIL (vocabulário bem simples e perguntas diretas)'
+      : options.difficulty === 'dificil'
+        ? 'DIFÍCIL (exige raciocínio mais profundo e conexões)'
+        : 'MÉDIO (padrão escolar)';
+
+  const customFocusInstruction = options.customPrompt?.trim()
+    ? `\nINSTRUÇÃO ESPECÍFICA DO ALUNO (DÊ FOCO TOTAL NISSO): "${options.customPrompt.trim()}"\n`
+    : '';
+
   if (apiKey.trim()) {
     const prompt = `Você é um tutor especialista em acessibilidade cognitiva para alunos com Dislexia, TDA e TDAH.
 Baseado EXCLUSIVAMENTE no conteúdo abaixo, gere o material para a função "${functionType}".
 Use frases diretas, vocabulário acolhedor e estrutura limpa.
+Tamanho solicitado: ${lengthLabel}.
+Nível de dificuldade: ${diffLabel}.
+Quantidade de itens (quando aplicável): ${targetCount}.
+Opções extras selecionadas: ${JSON.stringify(options)}.
+${customFocusInstruction}
 
 CONTEÚDO BASE:
 ${combinedText}
 
 Retorne APENAS um objeto JSON válido com a estrutura solicitada para "${functionType}":
-- Se "resumo_audio" ou "texto_em_audio": { "summaryText": "resumo em parágrafos curtos", "audioScript": "texto fluido para ser lido em voz alta", "dialogueLines": [{ "speaker": "Professor(a) Sofia", "text": "..." }, { "speaker": "Lucas (Monitor)", "text": "..." }] }
-- Se "apresentacao" ou "resumo_video": { "slides": [{ "title": "...", "bullets": ["...", "..."], "visualHint": "descrição visual simples", "narration": "fala narrada do slide" }] }
-- Se "mapa_mental": { "mindMap": { "centralTopic": "...", "branches": [{ "title": "...", "color": "#2563eb", "items": ["...", "..."] }] } }
-- Se "relatorio_resumo": { "summaryText": "relatório claro com tópicos curtos e exemplos" }
-- Se "cartoes_didaticos": { "flashcards": [{ "front": "Pergunta direta?", "back": "Resposta curta e clara", "tip": "Dica de memorização" }] }
-- Se "testes": { "quizQuestions": [{ "question": "...", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "..." }] }
-- Se "infografico": { "infographic": { "subtitle": "...", "steps": [{ "number": "1", "title": "...", "description": "...", "highlight": "Palavra-chave" }] } }
-- Se "tabela_dados": { "dataTable": { "headers": ["Conceito", "O que é", "Exemplo Prático"], "rows": [["...", "...", "..."]] } }
-- Se "prova_interativa": { "discursiveExam": [{ "id": "q1", "question": "Pergunta discursiva clara", "expectedKeyPoints": ["ponto 1", "ponto 2"], "hint": "Dica sem dar a resposta" }] }
-- Se "demonstracao_pratica": { "practicalDemos": [{ "title": "...", "everydaySituation": "Onde você vê isso na vida real", "stepByStepExperiment": ["Passo 1...", "Passo 2..."], "whyItMatters": "Por que isso fixa na memória" }] }`;
+- Se "resumo_audio" (estilo: ${options.audioStyle || 'analise_detalhada'}) ou "texto_em_audio":
+  { "summaryText": "visão geral escrita", "audioScript": "roteiro completo falado respeitando o estilo (${options.audioStyle}) e tamanho (${options.length})", "dialogueLines": [{ "speaker": "Apresentador 1", "text": "..." }, { "speaker": "Apresentador 2", "text": "..." }] }
+- Se "apresentacao" (estilo: ${options.presentationStyle || 'resumido'}) ou "resumo_video" (estilo: ${options.videoStyle || 'explicativo'}):
+  { "slides": [{ "title": "...", "bullets": ["...", "..."], "visualHint": "descrição visual simples", "narration": "fala narrada do slide" }] }
+- Se "mapa_mental":
+  { "mindMap": { "centralTopic": "...", "branches": [{ "title": "...", "color": "#2563eb", "items": ["...", "..."] }] } }
+- Se "relatorio_resumo" (estilo: ${options.reportStyle || 'descritivo_texto'}):
+  { "summaryText": "relatório completo", "reportSections": [{ "heading": "Título da Seção", "body": "Texto explicativo", "imageCaption": "Descrição visual ilustrada da seção" }] }
+- Se "cartoes_didaticos":
+  { "flashcards": [{ "front": "Pergunta?", "back": "Resposta", "tip": "Dica", "imageCaption": "${options.includeImages === 'com_imagens' ? 'Ilustração visual do conceito' : ''}" }] } (gere ${targetCount} cartões)
+- Se "testes" (tipo de pergunta: ${options.quizQuestionType || 'multipla_escolha'}):
+  { "quizQuestions": [{ "questionType": "${options.quizQuestionType || 'multipla_escolha'}", "question": "Enunciado (se preencher_lacuna, use _____ na frase)", "options": ["Opção A", "Opção B", "Opção C", "Opção D"], "correctIndex": 0, "correctIndices": [0, 2], "blankAnswer": "palavra da lacuna", "booleanAnswer": true, "explanation": "Explicação clara", "imageCaption": "${options.includeImages === 'com_imagens' ? 'Descrição do esquema visual da questão' : ''}" }] } (gere ${targetCount} perguntas)
+- Se "infografico":
+  { "infographic": { "subtitle": "...", "steps": [{ "number": "01", "title": "...", "description": "...", "highlight": "Palavra-chave" }] } }
+- Se "tabela_dados":
+  { "dataTable": { "headers": ["Conceito", "Explicação", "Aplicação"], "rows": [["...", "...", "..."]] } }
+- Se "prova_interativa":
+  { "discursiveExam": [{ "id": "q1", "question": "Pergunta discursiva", "expectedKeyPoints": ["ponto 1", "ponto 2"], "hint": "Dica de apoio", "imageCaption": "${options.includeImages === 'com_imagens' ? 'Esquema visual de apoio à questão' : ''}" }] } (gere ${targetCount} questões)
+- Se "demonstracao_pratica":
+  { "practicalDemos": [{ "title": "...", "everydaySituation": "Onde você vê isso na vida real", "stepByStepExperiment": ["Passo 1...", "Passo 2..."], "whyItMatters": "Por que isso fixa na memória" }] }`;
 
     const aiContent = await callGeminiJson<GeneratedArtifact['content']>(
       apiKey,
@@ -195,214 +231,303 @@ Retorne APENAS um objeto JSON válido com a estrutura solicitada para "${functio
     if (aiContent) return aiContent;
   }
 
-  // Fallback rico e contextualizado baseado no documento selecionado
+  // Fallback rico e parametrizado conforme todas as opções selecionadas pelo aluno
   const lines = combinedText
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l.length > 8);
+    .filter((l) => l.length > 6);
 
-  const keyPoints = lines.slice(0, 6);
+  const keyPoints =
+    lines.length > 0
+      ? lines
+      : [
+          `Estudo sobre ${combinedTitle}`,
+          'Ideia principal organizada de forma clara e direta.',
+          'Conexão entre os elementos fundamentais do material.',
+          'Aplicação prática do conceito nos exercícios.',
+          'Revisão dos pontos de atenção para memorização.',
+        ];
+
+  const focusNote = options.customPrompt?.trim()
+    ? ` Foco especial solicitado: "${options.customPrompt.trim()}".`
+    : '';
+
+  // Configuração de Resumo em Áudio por Estilo (Análise detalhada, Resumo, Crítica, Debate)
+  let dialogueLines: Array<{ speaker: string; text: string }> = [];
+  let audioScript = '';
+
+  if (options.audioStyle === 'resumo') {
+    audioScript = `Visão geral rápida (${lengthLabel}) sobre ${combinedTitle}.${focusNote}\n${keyPoints.slice(0, options.length === 'curto' ? 3 : options.length === 'longo' ? 8 : 5).join('.\n')}`;
+    dialogueLines = [
+      {
+        speaker: 'Apresentador Principal',
+        text: `Aqui está a visão geral direta para você entender as ideias principais de "${combinedTitle}" com rapidez!${focusNote}`,
+      },
+      {
+        speaker: 'Apresentador Principal',
+        text: keyPoints[1] || keyPoints[0],
+      },
+    ];
+  } else if (options.audioStyle === 'critica') {
+    audioScript = `Análise construtiva e especializada sobre ${combinedTitle}.${focusNote}\nPontos fortes do material e como aprofundar seu estudo:\n${keyPoints.slice(0, 5).join('.\n')}`;
+    dialogueLines = [
+      {
+        speaker: 'Analista Pedagógico',
+        text: `Analisando suas fontes sobre "${combinedTitle}", os conceitos principais estão bem definidos, especialmente: ${keyPoints[0]}.${focusNote}`,
+      },
+      {
+        speaker: 'Consultor de Estudo',
+        text: `Feedback construtivo para aperfeiçoar seu estudo: conecte "${keyPoints[1] || 'o conceito base'}" com exemplos práticos para fortalecer suas respostas discursivas.`,
+      },
+    ];
+  } else if (options.audioStyle === 'debate') {
+    audioScript = `Debate inteligente entre duas perspectivas sobre ${combinedTitle}.${focusNote}\n${keyPoints.slice(0, 6).join('.\n')}`;
+    dialogueLines = [
+      {
+        speaker: 'Debatedor(a) Helena (Perspectiva Teórica)',
+        text: `Quando olhamos para "${combinedTitle}", o ponto mais determinante é entender a base conceitual: ${keyPoints[0]}.${focusNote}`,
+      },
+      {
+        speaker: 'Debatedor Lucas (Perspectiva Prática)',
+        text: `Eu trago um ângulo complementar! Mais do que a definição, o que realmente transforma o entendimento é observar o efeito prático: ${keyPoints[1] || keyPoints[0]}.`,
+      },
+      {
+        speaker: 'Debatedor(a) Helena (Perspectiva Teórica)',
+        text: `Excelente contraponto. Na verdade, as duas visões se conectam quando analisamos: ${keyPoints[2] || 'o resultado final nas fontes'}.`,
+      },
+    ];
+  } else {
+    // Análise detalhada (padrão)
+    audioScript = `Análise detalhada conversada sobre ${combinedTitle}.${focusNote}\n${keyPoints.slice(0, options.length === 'curto' ? 4 : options.length === 'longo' ? 9 : 6).join('.\n')}`;
+    dialogueLines = [
+      {
+        speaker: 'Apresentadora Sofia',
+        text: `Bem-vindos! Hoje vamos fazer uma análise detalhada e animada conectando todos os temas de "${combinedTitle}".${focusNote}`,
+      },
+      {
+        speaker: 'Apresentador Lucas',
+        text: `Isso mesmo! E olha como o primeiro ponto já chama atenção logo de cara: ${keyPoints[0]}.`,
+      },
+      {
+        speaker: 'Apresentadora Sofia',
+        text: `E tem mais: quando conectamos isso com "${keyPoints[1] || 'o segundo conceito'}", tudo faz sentido de um jeito muito visual!`,
+      },
+    ];
+  }
+
+  // Slides (Apresentação ou Vídeo)
+  const slideCount =
+    options.length === 'curto' ? 2 : options.length === 'longo' ? 5 : 3;
+  const isDetailedSlide = options.presentationStyle === 'muito_detalhado';
+  const isDemoVideo = options.videoStyle === 'demonstrativo';
+
+  const slides = Array.from({ length: slideCount }, (_, idx) => {
+    const p1 = keyPoints[idx * 2] || keyPoints[0];
+    const p2 = keyPoints[idx * 2 + 1] || keyPoints[1] || p1;
+    return {
+      title: `Slide ${idx + 1}: ${
+        functionType === 'resumo_video'
+          ? isDemoVideo
+            ? `Demonstração Passo ${idx + 1}`
+            : `Explicação Etapa ${idx + 1}`
+          : `${combinedTitle} (Parte ${idx + 1})`
+      }`,
+      bullets: isDetailedSlide
+        ? [
+            `Explicação detalhada: ${p1}`,
+            `Contexto completo e relações: ${p2}`,
+            focusNote ? `Foco específico: ${options.customPrompt}` : 'Observação detalhada para revisão completa.',
+          ]
+        : [p1.slice(0, 90), p2.slice(0, 90)],
+      visualHint: isDemoVideo
+        ? `Demonstração visual em ação da etapa ${idx + 1}.`
+        : `Esquema visual limpo destacando a ideia ${idx + 1}.`,
+      narration: `${p1}.\n${p2}.${idx === 0 ? focusNote : ''}`,
+    };
+  });
+
+  // Flashcards (Cartões didáticos)
+  const withImg = options.includeImages === 'com_imagens';
+  const flashcards = Array.from({ length: targetCount }, (_, idx) => {
+    const point = keyPoints[idx % keyPoints.length];
+    return {
+      front: `[Nível ${options.difficulty || 'médio'}] Cartão #${idx + 1}: Como explicar este ponto de "${combinedTitle}"?${focusNote}`,
+      back: point,
+      tip: `Associe a palavra-chave principal do parágrafo #${idx + 1}.`,
+      imageCaption: withImg
+        ? `Ilustração Visual #${idx + 1}: Diagrama esquemático de "${point.slice(0, 45)}..."`
+        : undefined,
+    };
+  });
+
+  // Testes (Quiz) respeitando os 4 tipos de pergunta
+  const qType = options.quizQuestionType || 'multipla_escolha';
+  const quizQuestions = Array.from({ length: targetCount }, (_, idx) => {
+    const point = keyPoints[idx % keyPoints.length];
+    if (qType === 'verdadeiro_falso') {
+      return {
+        questionType: 'verdadeiro_falso' as const,
+        question: `Julgue como Verdadeiro ou Falso (${options.difficulty || 'médio'}): De acordo com o material "${combinedTitle}", "${point}".${focusNote}`,
+        options: ['Verdadeiro', 'Falso'],
+        correctIndex: 0,
+        booleanAnswer: true,
+        explanation: `É Verdadeiro! Esse ponto consta diretamente no material estudado.`,
+        imageCaption: withImg
+          ? `Esquema Visual da Afirmativa #${idx + 1}`
+          : undefined,
+      };
+    }
+    if (qType === 'preencher_lacuna') {
+      const words = point.split(/\s+/).filter((w) => w.length > 4);
+      const targetWord = (words[words.length - 1] || 'conceito').replace(
+        /[.,;:!?]/g,
+        ''
+      );
+      const blankedSentence = point.replace(targetWord, '__________');
+      return {
+        questionType: 'preencher_lacuna' as const,
+        question: `Complete a lacuna abaixo com a palavra correta:\n"${blankedSentence}"`,
+        options: [targetWord, 'elemento', 'processo', 'resultado'],
+        correctIndex: 0,
+        blankAnswer: targetWord,
+        explanation: `A palavra que completa corretamente a lacuna é "${targetWord}".`,
+        imageCaption: withImg
+          ? `Pista Visual para Completar a Lacuna #${idx + 1}`
+          : undefined,
+      };
+    }
+    if (qType === 'multiplas_corretas') {
+      return {
+        questionType: 'multiplas_corretas' as const,
+        question: `Marque TODAS as alternativas corretas sobre "${combinedTitle}" (Questão #${idx + 1}):${focusNote}`,
+        options: [
+          `✅ ${point}`,
+          `✅ ${keyPoints[(idx + 1) % keyPoints.length]}`,
+          '❌ Afirmativa incorreta que contradiz o texto principal.',
+          '❌ Ideia fora do tema estudado nas fontes.',
+        ],
+        correctIndex: 0,
+        correctIndices: [0, 1],
+        explanation: `As duas primeiras alternativas estão corretas e baseadas diretamente nas fontes selecionadas!`,
+        imageCaption: withImg
+          ? `Comparativo Visual de Alternativas #${idx + 1}`
+          : undefined,
+      };
+    }
+    // multipla_escolha (padrão)
+    return {
+      questionType: 'multipla_escolha' as const,
+      question: `Questão #${idx + 1} (${options.difficulty || 'médio'}): Sobre "${combinedTitle}", assinale a alternativa correta:${focusNote}`,
+      options: [
+        point,
+        'O processo ocorre sem relação com os conceitos apresentados.',
+        'Nenhuma das informações do documento se aplica a este caso.',
+        'O efeito observado é o oposto do descrito no material.',
+      ],
+      correctIndex: 0,
+      explanation: `Correto! Conforme estudado: "${point}".`,
+      imageCaption: withImg
+        ? `Ilustração de Apoio à Questão #${idx + 1}`
+        : undefined,
+    };
+  });
+
+  // Prova interativa discursiva
+  const discursiveExam = Array.from({ length: targetCount }, (_, idx) => {
+    const point = keyPoints[idx % keyPoints.length];
+    return {
+      id: `q-${idx + 1}`,
+      question: `Questão Discursiva ${idx + 1} (Dificuldade: ${options.difficulty || 'médio'}): Explique com suas palavras como funciona "${point.slice(0, 70)}...".${focusNote}`,
+      expectedKeyPoints: [point],
+      hint: 'Você pode ouvir a pergunta em áudio e responder falando no microfone!',
+      imageCaption: withImg
+        ? `Figura Ilustrativa da Questão ${idx + 1}: Representação visual de apoio`
+        : undefined,
+    };
+  });
+
+  // Relatório / Resumo (Descritivo em texto ou Interativo com imagens)
+  const reportSections = keyPoints
+    .slice(0, options.length === 'curto' ? 2 : options.length === 'longo' ? 5 : 3)
+    .map((pt, i) => ({
+      heading: `Seção ${i + 1} — Ideia Essencial`,
+      body: `${pt}${i === 0 ? focusNote : ''}`,
+      imageCaption:
+        options.reportStyle === 'interativo_com_imagens'
+          ? `Quadro Visual Interativo #${i + 1}: Ilustração do tópico "${pt.slice(0, 45)}..."`
+          : undefined,
+    }));
 
   return {
-    summaryText: `Resumo Estruturado para Leitura Fácil (${combinedTitle}):\n\n${lines.slice(0, 8).join('\n\n')}`,
-    audioScript: `Olá! Vamos ouvir juntos os pontos mais importantes sobre ${combinedTitle}. Respire fundo e acompanhe no seu ritmo. ${lines.slice(0, 7).join('. ')}`,
-    dialogueLines: [
-      {
-        speaker: 'Professor(a) Sofia',
-        text: `Hoje vamos descomplicar o tema "${combinedTitle}" sem textos longos ou cansativos!`,
-      },
-      {
-        speaker: 'Lucas (Monitor)',
-        text: `Ótimo! Qual é a primeira ideia principal que eu preciso guardar na cabeça?`,
-      },
-      {
-        speaker: 'Professor(a) Sofia',
-        text: keyPoints[1] || 'O segredo é dividir o assunto em partes pequenas e conectar com o dia a dia.',
-      },
-      {
-        speaker: 'Lucas (Monitor)',
-        text: `Entendi! E como isso costuma cair nas atividades ou provas?`,
-      },
-      {
-        speaker: 'Professor(a) Sofia',
-        text: keyPoints[2] || 'Eles costumam perguntar a causa e a consequência principal desse processo.',
-      },
-    ],
-    slides: [
-      {
-        title: `1. Visão Geral: ${combinedTitle}`,
-        bullets: [
-          keyPoints[0] || 'Conceito central apresentado de forma direta',
-          keyPoints[1] || 'Ideia principal destacada para leitura rápida',
-        ],
-        visualHint: 'Imagine um esquema colorido ligando a causa ao resultado.',
-        narration: `Neste primeiro slide, vemos a ideia principal de ${combinedTitle}. ${keyPoints[1] || ''}`,
-      },
-      {
-        title: '2. Elementos Essenciais (Passo a Passo)',
-        bullets: [
-          keyPoints[2] || 'Primeiro elemento fundamental do conteúdo',
-          keyPoints[3] || 'Segundo elemento que trabalha em conjunto',
-        ],
-        visualHint: 'Blocos numerados de 1 a 3 em sequência lógica.',
-        narration: `Agora repare nos elementos essenciais: ${keyPoints[2] || ''} e ${keyPoints[3] || ''}.`,
-      },
-      {
-        title: '3. O Que Não Esquecer na Prova',
-        bullets: [
-          keyPoints[4] || 'Resumo final em uma frase simples',
-          'Sempre revise grifando os verbos de ação da pergunta',
-        ],
-        visualHint: 'Cartão de revisão com estrela de destaque.',
-        narration: `Para fechar com segurança: ${keyPoints[4] || 'foque nas palavras-chave destacadas.'}`,
-      },
-    ],
+    summaryText: `Relatório / Resumo (${lengthLabel}):\n${focusNote ? `\n🎯 ${focusNote}\n` : ''}\n${keyPoints
+      .slice(0, options.length === 'curto' ? 3 : options.length === 'longo' ? 8 : 5)
+      .join('\n\n')}`,
+    reportSections,
+    audioScript,
+    dialogueLines,
+    slides,
     mindMap: {
-      centralTopic: docs[0]?.title || 'Tema de Estudo',
+      centralTopic: `${combinedTitle}${options.customPrompt ? ` (${options.customPrompt})` : ''}`,
       branches: [
         {
-          title: '1. O Que É (Conceito)',
+          title: '1. Ideia Central',
           color: '#2563eb',
           items: [
-            keyPoints[0]?.slice(0, 75) || 'Definição principal de forma direta',
-            keyPoints[1]?.slice(0, 75) || 'Como funciona na base',
+            keyPoints[0]?.slice(0, 80) || 'Conceito principal',
+            keyPoints[1]?.slice(0, 80) || 'Base do tema',
           ],
         },
         {
-          title: '2. Partes Principais',
+          title: '2. Conexões e Detalhes',
           color: '#16a34a',
           items: [
-            keyPoints[2]?.slice(0, 75) || 'Componente 1 essencial',
-            keyPoints[3]?.slice(0, 75) || 'Componente 2 complementar',
+            keyPoints[2]?.slice(0, 80) || 'Etapa intermediária',
+            keyPoints[3]?.slice(0, 80) || 'Relação entre conceitos',
           ],
         },
         {
-          title: '3. Aplicação & Dica de Prova',
+          title: '3. Foco & Revisão',
           color: '#d97706',
           items: [
-            keyPoints[4]?.slice(0, 75) || 'Resultado prático observado',
-            'Associar a uma imagem mental facilita lembrar na hora da prova',
+            options.customPrompt?.trim() ||
+              keyPoints[4]?.slice(0, 80) ||
+              'Aplicação prática',
+            'Síntese visual rápida para não esquecer',
           ],
         },
       ],
     },
-    flashcards: [
-      {
-        front: `Qual é a ideia central de "${docs[0]?.title || 'este conteúdo'}"?`,
-        back: keyPoints[1] || keyPoints[0] || 'Compreender como os elementos principais se relacionam na prática.',
-        tip: 'Lembre-se da palavra-chave em destaque no primeiro parágrafo!',
-      },
-      {
-        front: 'Quais são os elementos ou etapas mais importantes citados no material?',
-        back: `${keyPoints[2] || 'Primeiro passo'} e ${keyPoints[3] || 'Segundo passo'}.`,
-        tip: 'Conte nos dedos os elementos principais para memorizar rápido.',
-      },
-      {
-        front: 'Como diferenciar o processo principal de outros parecidos?',
-        back: keyPoints[4] || 'Observando o que entra no início do processo e o que é produzido no final.',
-        tip: 'Faça uma setinha mental: Entrada ➔ Transformação ➔ Saída.',
-      },
-    ],
-    quizQuestions: [
-      {
-        question: `De acordo com o material "${docs[0]?.title}", qual afirmativa está CORRETA?`,
-        options: [
-          keyPoints[1] || 'O processo ocorre em etapas organizadas e depende dos elementos principais.',
-          'O processo acontece sem nenhuma relação com o ambiente ao redor.',
-          'Não existem etapas definidas neste conteúdo.',
-          'O resultado final é sempre igual ao elemento inicial sem transformação.',
-        ],
-        correctIndex: 0,
-        explanation: `Exatamente! No material vimos que: "${keyPoints[1] || 'as etapas seguem uma sequência clara'}".`,
-      },
-      {
-        question: 'Qual estratégia ajuda mais na hora de resolver uma questão sobre esse tema?',
-        options: [
-          'Identificar os elementos de entrada e o resultado final descrito no texto.',
-          'Chutar a primeira alternativa sem ler o enunciado todo.',
-          'Ignorar os números e palavras em destaque.',
-          'Decoras palavras soltas sem entender o exemplo prático.',
-        ],
-        correctIndex: 0,
-        explanation: 'Perfeito! Identificar o que entra e o que sai evita pegadinhas e ajuda o cérebro a visualizar.',
-      },
-    ],
+    flashcards,
+    quizQuestions,
     infographic: {
-      subtitle: `Roteiro Visual Passo a Passo — ${docs[0]?.title}`,
-      steps: [
-        {
-          number: '01',
-          title: 'Ponto de Partida',
-          description: keyPoints[0] || 'Identificação do tema e onde ele acontece.',
-          highlight: 'INÍCIO',
-        },
-        {
-          number: '02',
-          title: 'Ingredientes / Elementos',
-          description: keyPoints[2] || 'Os fatores necessários para o fenômeno acontecer.',
-          highlight: 'ELEMENTOS',
-        },
-        {
-          number: '03',
-          title: 'Transformação na Prática',
-          description: keyPoints[3] || 'Como os elementos interagem entre si.',
-          highlight: 'AÇÃO',
-        },
-        {
-          number: '04',
-          title: 'Resultado Final',
-          description: keyPoints[4] || 'O que é gerado ao final e por que é importante.',
-          highlight: 'CONCLUSÃO',
-        },
-      ],
+      subtitle: `Infográfico Passo a Passo — ${combinedTitle}${focusNote}`,
+      steps: keyPoints.slice(0, 4).map((pt, idx) => ({
+        number: `0${idx + 1}`,
+        title: `Etapa ${idx + 1}`,
+        description: pt,
+        highlight: `PASSO ${idx + 1}`,
+      })),
     },
     dataTable: {
-      headers: ['Tópico / Etapa', 'Explicação Simples', 'Palavra-Chave para Lembrar'],
-      rows: [
-        ['Conceito Principal', keyPoints[1] || 'Definição base do material', 'Essência'],
-        ['Elementos Envolvidos', keyPoints[2] || 'Fatores que participam', 'Componentes'],
-        ['Funcionamento', keyPoints[3] || 'Relação de causa e efeito', 'Transformação'],
-        ['Resultado / Conclusão', keyPoints[4] || 'Efeito final observado', 'Produto Final'],
-      ],
+      headers: ['Tópico / Conceito', 'Explicação Clara', 'Foco / Aplicação'],
+      rows: keyPoints.slice(0, 4).map((pt, idx) => [
+        `Ponto #${idx + 1}`,
+        pt,
+        options.customPrompt?.trim() || 'Essencial para revisão',
+      ]),
     },
-    discursiveExam: [
-      {
-        id: 'q1',
-        question: `Com suas próprias palavras (você pode responder falando no microfone!), explique a ideia principal de "${docs[0]?.title}".`,
-        expectedKeyPoints: [
-          keyPoints[1] || 'Conceito central',
-          keyPoints[2] || 'Elementos principais',
-        ],
-        hint: 'Imagine que você está contando para um amigo de forma bem simples como isso funciona.',
-      },
-      {
-        id: 'q2',
-        question: 'Cite dois elementos ou partes importantes mencionados neste estudo e diga o papel de cada um.',
-        expectedKeyPoints: [
-          keyPoints[2] || 'Elemento 1',
-          keyPoints[3] || 'Elemento 2',
-        ],
-        hint: 'Você pode usar o botão "Ouvir Pergunta" quantas vezes quiser antes de gravar sua voz.',
-      },
-      {
-        id: 'q3',
-        question: 'Dê um exemplo prático ou explique o que acontece no final desse processo.',
-        expectedKeyPoints: [keyPoints[4] || 'Resultado final'],
-        hint: 'Pense no que é produzido ou transformado no final.',
-      },
-    ],
+    discursiveExam,
     practicalDemos: [
       {
-        title: `Experimento / Exemplo Real: Vendo "${docs[0]?.title}" no Dia a Dia`,
-        everydaySituation:
-          'Muitas vezes lemos no caderno e parece abstrato, mas esse conteúdo acontece bem na nossa frente em situações cotidianas (na cozinha de casa, no jardim ou quando fazemos compras).',
+        title: `Demonstração Prática: ${combinedTitle}`,
+        everydaySituation: `Exemplo aplicado na prática sobre o conteúdo selecionado.${focusNote}`,
         stepByStepExperiment: [
-          'Passo 1: Pegue um objeto real em casa relacionado ao tema (ex: uma folha de planta no sol, ou dividir uma barra de chocolate em partes iguais).',
-          `Passo 2: Observe na prática o que o texto diz: "${keyPoints[1] || 'veja cada parte funcionando'}".`,
-          'Passo 3: Explique em voz alta em 30 segundos o que você acabou de observar — falar em voz alta ativa a memória auditiva!',
+          `Passo 1: Observe o conceito base: "${keyPoints[0]}".`,
+          `Passo 2: Aplique a situação prática: "${keyPoints[1] || keyPoints[0]}".`,
+          'Passo 3: Explique em voz alta o resultado observado para fixar na memória.',
         ],
         whyItMatters:
-          'Para quem tem dislexia ou TDAH, ver e tocar em um exemplo concreto fixa 3 vezes mais rápido do que apenas reler páginas de texto.',
+          'Conectar o conteúdo a experiências visuais e práticas torna o estudo leve e duradouro.',
       },
     ],
   };

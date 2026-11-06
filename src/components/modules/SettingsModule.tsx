@@ -341,7 +341,7 @@ export const SettingsWorkspace: React.FC = () => {
                 Lexend (Sans-Serif projetada para fluência de leitura)
               </option>
               <option value="Inter">
-                Inter (Sans-Serif limpa estilo NotebookLM)
+                Inter (Sans-Serif limpa e moderna)
               </option>
             </select>
           </div>

@@ -32,7 +32,7 @@ const AppShell: React.FC = () => {
         </div>
       )}
 
-      {/* Layout Principal em 4 Colunas no Computador (VSCode + NotebookLM) */}
+      {/* Layout Principal em 4 Colunas no Computador */}
       <div className="flex-1 flex overflow-hidden">
         {/* 1ª Coluna (Mais à Esquerda): Barra de Atividades estilo VS Code */}
         <ActivityBar />

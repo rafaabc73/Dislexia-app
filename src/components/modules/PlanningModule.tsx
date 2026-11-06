@@ -167,18 +167,37 @@ export const PlanningSidebar: React.FC = () => {
             htmlFor="plan-minutes"
             className="block text-xs font-semibold mb-1"
           >
-            Tempo diário confortável: {dailyMinutes} min/dia
+            5. Tempo de estudo diário (minutos por dia):
           </label>
-          <input
-            id="plan-minutes"
-            type="range"
-            min={20}
-            max={90}
-            step={10}
-            value={dailyMinutes}
-            onChange={(e) => setDailyMinutes(Number(e.target.value))}
-            className="w-full"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="plan-minutes"
+              type="range"
+              min={15}
+              max={360}
+              step={15}
+              value={Math.min(360, dailyMinutes)}
+              onChange={(e) => setDailyMinutes(Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min={10}
+              max={600}
+              step={5}
+              aria-label="Digite os minutos de estudo diário"
+              value={dailyMinutes}
+              onChange={(e) =>
+                setDailyMinutes(Math.max(10, Number(e.target.value) || 10))
+              }
+              className="w-20 rounded-lg px-2 py-1 text-xs font-bold border text-center"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            />
+            <span className="text-xs font-semibold">min/dia</span>
+          </div>
         </div>
 
         <button

@@ -8,7 +8,7 @@ Bem-vindo ao **Dislexia App**! Este é um aplicativo gratuito e de código abert
 
 ## ✨ Como o Aplicativo Funciona?
 
-O visual do aplicativo foi inspirado no **NotebookLM** e no **VS Code**, usando **exclusivamente fontes sem serifa (Sans-Serif)** como *Lexend* e *Inter*, que reduzem o embaralhamento de letras e o cansaço visual de quem tem dislexia.
+O visual do aplicativo possui um layout limpo em colunas inspirado no **VS Code**, usando **exclusivamente fontes sem serifa (Sans-Serif)** como *Lexend* e *Inter*, que reduzem o embaralhamento de letras e o cansaço visual de quem tem dislexia.
 
 No computador, a tela é dividida de forma limpa em **4 colunas**:
 
