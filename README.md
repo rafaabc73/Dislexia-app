@@ -2,7 +2,7 @@
 
 Bem-vindo ao **Dislexia App**! Este é um aplicativo gratuito e de código aberto criado especialmente para ajudar **crianças e adolescentes com Dislexia, Déficit de Atenção (TDA) e TDAH** a organizarem seus materiais escolares, estudarem sem distrações e aprenderem do jeito que o cérebro deles funciona melhor: **com áudio, imagens claras, exemplos práticos e zero poluição visual**.
 
-> 💡 **Não entende nada de programação?** Fique tranquilo! Este guia foi escrito passo a passo, em linguagem simples, para que qualquer pai, mãe, professor ou aluno consiga instalar no **Computador (Windows ou Mac)** e no **Celular/Tablet (iPhone/iPad - iOS)**.
+> 💡 **Não entende nada de programação?** Fique tranquilo! Este guia foi escrito passo a passo, em linguagem simples, para que qualquer pai, mãe, professor ou aluno consiga instalar e abrir como aplicativo no **Computador (Windows, Mac e Linux)** e no **Celular/Tablet (iPhone/iPad - iOS)**.
 
 ---
 
@@ -15,99 +15,100 @@ No computador, a tela é dividida de forma limpa em **4 colunas**:
 1. **1ª Coluna (Barra de Ícones à esquerda):** Onde você escolhe qual ferramenta quer usar:
    - 📁 **Pastas:** Suas matérias organizadas automaticamente por **Ano**, **Disciplina** (Português, Matemática, História, Boletim/Informações Gerais, etc.), **Mês** e uma subpasta especial de **Provas**. Quando você envia uma foto ou PDF, a Inteligência Artificial descobre sozinha de qual matéria é e guarda na pasta certa com a data do dia!
    - ✨ **Funções (Estúdio de Aprendizado):** Transforma qualquer texto, PDF ou foto de caderno em:
-     - 🎧 **Resumo em Áudio** (estilo podcast explicativo)
-     - 🖥️ **Apresentação em Slides**
-     - 🎬 **Resumo em Vídeo Narrado** (slides visuais sincronizados com voz)
+     - 🎧 **Resumo em Áudio** (Análise detalhada, Resumo rápido, Crítica construtiva ou Debate entre dois apresentadores)
+     - 🖥️ **Apresentação em Slides** (Slide muito detalhado ou resumido)
+     - 🎬 **Resumo em Vídeo Narrado** (Vídeo demonstrativo ou explicativo sincronizado com voz)
      - 🕸️ **Mapa Mental** visual
-     - 📝 **Relatório / Resumo** em tópicos curtos
+     - 📝 **Relatório / Resumo** (Descritivo em texto ou interativo com imagens)
      - 🗂️ **Cartões Didáticos (Flashcards)**
-     - ✅ **Testes (Quiz)** de múltipla escolha
+     - ✅ **Testes (Quiz)** (Múltipla escolha, mais de uma resposta certa, preencher lacuna e verdadeiro ou falso)
      - 📊 **Infográfico** visual
      - 📋 **Tabela dos Dados**
      - 🔊 **Transformar Texto/PDF em Áudio** (lê livros e apostilas em voz alta destacando as palavras)
      - 🎙️ **Prova Interativa Discursiva** (o aplicativo lê a pergunta em voz alta e o aluno pode **responder falando no microfone/ditado**!)
      - 🧪 **Demonstração Prática** (exemplos reais do dia a dia para entender a matéria na prática)
-   - 📸 **Cópia (Foto da Lousa/Quadro):** Tirou foto do quadro na escola? Envie aqui e o aplicativo transforma a foto em **Cartões de Estudo** ou em um **PDF limpo e organizado** para ler sem esforço.
-   - 📅 **Agenda:** Envie uma foto dos deveres anotados no quadro ou na agenda de papel e o aplicativo cria os lembretes sozinho com alertas de prazo! Você também pode adicionar provas e tarefas manualmente.
-   - 🧭 **Planejamento:** Responda 3 perguntinhas rápidas (qual é o prazo, quais matérias tem mais dificuldade e o que vai cair na prova) e receba um **Plano de Estudos Personalizado** dividido em metas curtinhas (perfeito para TDAH).
+   - 📸 **Cópia (Foto da Lousa/Quadro):** Tirou foto do quadro na escola? Envie uma ou várias fotos aqui e o aplicativo transforma em **Cartões de Estudo**, **Quadro Passado a Limpo** ou exporta em **PDF diretamente para a pasta da matéria**.
+   - 📅 **Agenda:** Calendário mensal com marcações nos dias de entrega e lista ordenada das tarefas mais próximas do vencimento até as mais distantes (ao marcar como realizada, a tarefa conclui e sai da lista de pendências).
+   - 🧭 **Planejamento:** Responda perguntas rápidas (meta, prazo, matérias de maior dificuldade e tempo diário de estudo — inclusive acima de 90 minutos) e receba um **Plano de Estudos Personalizado**.
    - 🎯 **Correção de Provas:** Escolha a matéria e a prova realizada. A IA corrige questão por questão, explicando com paciência o que errou e como acertar, em **Áudio Explicativo** ou em **Formato de Diálogo**.
+   - 🧮 **Matemática Passo a Passo:** Tire uma foto da questão ou envie uma lista de exercícios inteira para receber a resolução detalhada etapa por etapa, mostrando **qual caminho seguir** e o porquê de cada conta.
+   - ✍️ **Redação (ENEM):** Escolha entre **Correção** (envie a foto da sua redação e receba a nota de 0 a 1000 nas **5 Competências do ENEM** + sugestões simples e práticas de melhoria) ou **Praticar em Blocos Estilo LEGO** (monte a **redação completa** ou **parágrafos específicos** peça por peça com conectivos clicáveis e moldes estruturados).
    - ⚙️ **Configurações (Engrenagem no canto inferior esquerdo):** Escolha entre **Tema Claro ou Escuro**, ajuste o **tamanho e espaçamento das letras**, ative a **Régua de Leitura** (que destaca a linha onde você está lendo) e coloque sua **Chave da IA**.
 2. **2ª Coluna (Painel de Opções):** Mostra as pastas ou botões da ferramenta que você clicou na 1ª coluna.
-3. **3ª Coluna (Bloco Principal):** O espaço amplo no centro onde você lê seus documentos, faz provas interativas, ouve resumos e vê seus mapas mentais.
-4. **4ª Coluna (Chat de IA Focado à direita):** Um assistente virtual para tirar dúvidas. **Diferencial para TDAH:** Este chat possui uma **Trava de Foco** — se o aluno tentar conversar sobre videogames ou assuntos fora da matéria que está estudando, o assistente gentilmente lembra o aluno de voltar para o estudo!
+3. **3ª Coluna (Bloco Principal):** O espaço amplo no centro onde você lê seus documentos, faz provas interativas, resolve matemática e monta sua redação.
+4. **4ª Coluna (Chat de IA Focado à direita):** Um assistente virtual para tirar dúvidas (que pode ser minimizado com 1 clique). **Diferencial para TDAH:** Este chat possui uma **Trava de Foco** — se o aluno tentar conversar sobre videogames ou assuntos fora da matéria que está estudando, o assistente gentilmente lembra o aluno de voltar para o estudo!
 
 ---
 
-## 🖥️ Passo a Passo para Instalar no Windows (Explicação para Leigos)
+## 💻 Como Instalar e Abrir como Aplicativo de Computador (Estilo VS Code) em Windows, Mac e Linux
 
-Existem **duas formas** de usar e instalar o aplicativo no Windows. Escolha a que achar mais fácil:
+O **Dislexia App** foi construído para funcionar exatamente como um **aplicativo de computador (estilo VS Code)** em qualquer sistema operacional (**Windows**, **macOS** e **Linux**):
+- Abre em uma **janela própria de aplicativo** (sem abas de internet e sem barra de endereços para não distrair o aluno).
+- Cria automaticamente um **ícone do aplicativo** na sua Área de Trabalho / Menu Iniciar / Pasta Aplicativos.
+- Cria automaticamente no seu computador a pasta física **`Pastas_do_Aluno/`** com todas as disciplinas, meses e subpastas de provas.
 
-### Forma 1: Instalar no seu Computador Windows (Passo a Passo Completo)
+### Passo 1 (Comum para Windows, Mac e Linux): Instalar o Node.js
+Na primeira vez, instale o **Node.js** gratuito (leva menos de 2 minutos):
+1. Acesse o site oficial: **[https://nodejs.org](https://nodejs.org)**
+2. Clique no botão verde **"Baixar Node.js (LTS)"** e instale normalmente clicando em *Avançar / Concluir*.
 
-Para rodar o programa direto no seu computador Windows, você só precisa instalar duas ferramentas gratuitas na primeira vez (leva menos de 5 minutos):
+### Passo 2: Baixar a Pasta do Projeto
+1. Nesta página do GitHub (`https://github.com/rafaabc73/Dislexia-app`), clique no botão verde **`<> Code`** e escolha **"Download ZIP"**.
+2. Extraia (descompacte) o arquivo ZIP no seu computador.
 
-#### Passo 1: Instalar o "Node.js" (O motor que faz o aplicativo funcionar)
-1. Abra o seu navegador de internet (Chrome ou Edge) e acesse o site oficial: **[https://nodejs.org](https://nodejs.org)**
-2. Clique no botão verde grande escrito **"Baixar Node.js (LTS)"**.
-3. Quando o arquivo terminar de baixar, dê dois cliques nele.
-4. Na janelinha que abrir, clique em **Next (Avançar)**, marque a caixinha *"I accept"* (Eu aceito), e continue clicando em **Next** até aparecer **Install (Instalar)** e depois **Finish (Concluir)**.
+---
 
-#### Passo 2: Baixar este Aplicativo do GitHub
-1. Aqui mesmo nesta página do GitHub (`https://github.com/rafaabc73/Dislexia-app`), procure o botão verde escrito **`<> Code`** (fica no topo direito da lista de arquivos).
-2. Clique nele e depois clique em **"Download ZIP"**.
-3. Vá até a sua pasta de **Downloads**, clique com o **botão direito do mouse** sobre o arquivo `Dislexia-app-main.zip` e escolha **"Extrair Tudo..."** (ou *Descompactar*).
-4. Abra a pasta que foi extraída (`Dislexia-app-main`).
+### 🪟 No Windows (Windows 10 e Windows 11)
+1. Abra a pasta do projeto e dê **dois cliques** no arquivo **`INICIAR_WINDOWS.bat`**.
+2. **Pronto!** Automaticamente ele:
+   - Cria a estrutura de pastas **`Pastas_do_Aluno`** no seu computador;
+   - Cria o atalho do aplicativo **"Dislexia App"** na sua **Área de Trabalho** e no **Menu Iniciar do Windows**;
+   - Abre o **Dislexia App** em uma **janela própria de aplicativo (estilo VS Code)**!
 
-#### Passo 3: Ligar o Aplicativo com Dois Cliques!
-1. Dentro da pasta do aplicativo, dê **dois cliques** no arquivo chamado **`INICIAR_WINDOWS.bat`** (nós já deixamos esse atalho pronto para você!).
-   - *Caso prefira abrir pelo terminal:* Clique na barra de endereço da pasta, digite `cmd` e aperte **Enter**. Na tela preta que abrir, digite `npm install` (aperte Enter e espere terminar) e depois digite `npm run dev` (aperte Enter).
-2. O aplicativo vai se abrir automaticamente no seu navegador no endereço `http://localhost:5173`.
-3. **Para transformar em um Aplicativo na sua Área de Trabalho do Windows:**
-   - Olhe para o canto superior direito da barra de endereço do seu navegador (Google Chrome ou Microsoft Edge).
-   - Clique no ícone de **Computador com uma setinha** (chamado *"Instalar Dislexia App"*).
-   - Clique em **Instalar**. Pronto! Agora o **Dislexia App** tem um ícone próprio na sua Área de Trabalho e no Menu Iniciar do Windows, igual a qualquer outro programa!
+---
+
+### 🍎 No Mac (macOS — Apple Silicon M1/M2/M3/M4 ou Intel)
+1. Abra a pasta do projeto no Finder e dê **dois cliques** no arquivo **`INICIAR_MAC.command`**.
+2. **Pronto!** Automaticamente ele:
+   - Cria a estrutura de pastas **`Pastas_do_Aluno`** no seu Mac;
+   - Instala o aplicativo **`Dislexia App.app`** dentro da sua pasta de **Aplicativos (`~/Applications`)** e na sua **Mesa (Desktop)**;
+   - Abre o **Dislexia App** em uma **janela própria de aplicativo (estilo VS Code)**!
+
+---
+
+### 🐧 No Linux (Ubuntu, Debian, Linux Mint, Fedora, Arch, etc.)
+1. Abra a pasta do projeto e dê dois cliques em **`INICIAR_LINUX.sh`** (ou pelo terminal na pasta execute `./INICIAR_LINUX.sh`).
+2. **Pronto!** Automaticamente ele:
+   - Cria a estrutura de pastas **`Pastas_do_Aluno`** no seu computador;
+   - Instala o aplicativo **`Dislexia App`** no **Menu de Aplicativos do Linux** (`~/.local/share/applications/dislexia-app.desktop`) e na sua Área de Trabalho;
+   - Abre o **Dislexia App** em uma **janela própria dedicada (estilo VS Code)**!
+
+> 💡 **Modo Electron Nativo (Opcional):** O projeto também conta com integração direta com **Electron** (`electron/main.cjs`). Se desejar iniciar pelo binário Electron em qualquer sistema operacional, basta rodar `npx electron .` na pasta do projeto.
 
 ---
 
 ## 📱 Passo a Passo para Instalar no iPhone ou iPad (iOS)
 
-A Apple não permite baixar arquivos `.exe` no iPhone, mas este aplicativo foi construído com tecnologia **PWA (Aplicativo Web Progressivo)**, o que permite instalá-lo direto na tela inicial do iPhone ou iPad sem precisar pagar conta de desenvolvedor da Apple!
+Este aplicativo também possui tecnologia **PWA (Aplicativo Web Progressivo)**, permitindo instalá-lo direto na tela inicial do iPhone ou iPad:
 
-### Opção A: Usando pela sua Rede Wi-Fi de Casa (Quando o App estiver aberto no seu PC)
-1. Ligue o aplicativo no seu computador seguindo o passo acima (usando o arquivo `INICIAR_WINDOWS.bat` no Windows ou `INICIAR_MAC.command` no Mac).
-2. Na janelinha do computador, vai aparecer um endereço chamado **Network** (por exemplo: `http://192.168.1.15:5173`).
-3. Pegue o seu **iPhone ou iPad** (conectado no mesmo Wi-Fi da sua casa) e abra o navegador **Safari** (o ícone da bússola azul da Apple).
-4. Digite aquele endereço `http://192.168...` no Safari e aperte **Ir**.
-5. Agora vem a mágica para instalar no iPhone:
-   - Toque no botão de **Compartilhar** do Safari (aquele quadradinho com uma seta apontando para cima ⬆️ na barra inferior ou superior).
-   - Role a lista para baixo e toque em **"Adicionar à Tela de Início"** (*Add to Home Screen*).
-   - Toque em **"Adicionar"** no canto superior direito.
-6. **Pronto!** O ícone do **Dislexia App** vai aparecer na tela do seu iPhone/iPad junto com seus outros aplicativos e abrirá em tela cheia!
-
-### Opção B: Publicando Gratuitamente na Internet (Para acessar de qualquer lugar no 4G/5G)
-Se quiser usar no iPhone até fora de casa (na escola, por exemplo):
-1. Crie uma conta gratuita no site **[https://vercel.com](https://vercel.com)** usando sua conta do GitHub.
-2. Clique em **"Add New Project"** e selecione o repositório **`Dislexia-app`**.
-3. Clique em **"Deploy"**. Em 1 minuto, o site te dará um link seu (ex: `dislexia-app.vercel.app`).
-4. Abra esse link no **Safari do iPhone/iPad**, toque em **Compartilhar ⬆️** e depois em **"Adicionar à Tela de Início"**. Assim ele funciona em qualquer lugar do mundo!
+1. Abra o link do aplicativo no navegador **Safari** do iPhone ou iPad.
+2. Toque no botão de **Compartilhar** do Safari (quadradinho com seta para cima ⬆️).
+3. Role para baixo e toque em **"Adicionar à Tela de Início"** (*Add to Home Screen*) e depois em **"Adicionar"**.
+4. O ícone do **Dislexia App** aparecerá na tela inicial do seu iPhone/iPad e abrirá em tela cheia como um aplicativo nativo!
 
 ---
 
 ## 🔑 Como Conseguir sua Chave Gratuita de Inteligência Artificial (Google Gemini)
 
-Para que o aplicativo leia fotos do quadro, organize PDFs sozinho e crie provas e resumos personalizados, ele usa a Inteligência Artificial do Google (**Gemini**), que possui uma chave **totalmente gratuita**:
+Para que a Inteligência Artificial leia fotos manuscritas do quadro, resolva fotos de listas de exercícios de Matemática e corrija fotos de Redação:
 
 1. Acesse o site oficial do Google AI Studio: **[https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)**
-2. Entre com a sua conta normal do Google (Gmail).
-3. Clique no botão azul **"Create API Key"** (Criar Chave de API).
-4. Copie o código que aparecer na tela (começa com `AIza...`).
-5. Abra o **Dislexia App**, clique no ícone de **Engrenagem (⚙️ Configurações)** no canto inferior esquerdo, cole sua chave no campo **"Chave API da IA (Google Gemini)"** e clique em **Salvar**.
-
-> 💡 *Mesmo sem colocar a chave de API, o aplicativo já vem com um **Modo Demonstração Inteligente** e leitura em voz alta nativa para você testar todas as telas imediatamente!*
+2. Entre com a sua conta Google (Gmail) e clique em **"Create API Key"**.
+3. Copie a chave gerada (começa com `AIza...`).
+4. No **Dislexia App**, clique em **⚙️ Configurações** (canto inferior esquerdo), cole sua chave no campo **"Chave API da IA (Google Gemini)"** e clique em **Salvar**.
 
 ---
 
 ## 🤝 Contribuições e Código Aberto
 
-Este projeto é 100% aberto para ajudar estudantes com neurodivergência (Dislexia, TDA, TDAH). Sinta-se livre para baixar, usar na sua escola, sugerir melhorias ou compartilhar com outras famílias!
-
+Este projeto é aberto para ajudar estudantes com neurodivergência (Dislexia, TDA, TDAH). Sinta-se livre para baixar, instalar no seu computador ou celular e compartilhar com outras famílias e escolas!

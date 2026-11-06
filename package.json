@@ -4,10 +4,14 @@
   "version": "1.0.0",
   "description": "Aplicativo aberto de apoio escolar para crianças e adolescentes com dislexia, TDA e TDAH",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/build-standalone.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "desktop": "node scripts/start-desktop-app.mjs",
+    "install-app": "node scripts/install-desktop-shortcut.mjs",
+    "electron": "electron ."
   },
   "dependencies": {
     "jspdf": "^2.5.2",
