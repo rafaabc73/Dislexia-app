@@ -6,6 +6,8 @@ import { BoardCopySidebar } from '../modules/BoardCopyModule';
 import { AgendaSidebar } from '../modules/AgendaModule';
 import { PlanningSidebar } from '../modules/PlanningModule';
 import { CorrectionSidebar } from '../modules/CorrectionModule';
+import { MathSidebar } from '../modules/MathModule';
+import { EssaySidebar } from '../modules/EssayModule';
 import { SettingsSidebar } from '../modules/SettingsModule';
 
 export const SidebarPanel: React.FC = () => {
@@ -26,6 +28,8 @@ export const SidebarPanel: React.FC = () => {
       {activeTab === 'agenda' && <AgendaSidebar />}
       {activeTab === 'planejamento' && <PlanningSidebar />}
       {activeTab === 'correcao' && <CorrectionSidebar />}
+      {activeTab === 'matematica' && <MathSidebar />}
+      {activeTab === 'redacao' && <EssaySidebar />}
       {activeTab === 'configuracoes' && <SettingsSidebar />}
     </aside>
   );

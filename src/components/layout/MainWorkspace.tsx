@@ -6,6 +6,8 @@ import { BoardCopyWorkspace } from '../modules/BoardCopyModule';
 import { AgendaWorkspace } from '../modules/AgendaModule';
 import { PlanningWorkspace } from '../modules/PlanningModule';
 import { CorrectionWorkspace } from '../modules/CorrectionModule';
+import { MathWorkspace } from '../modules/MathModule';
+import { EssayWorkspace } from '../modules/EssayModule';
 import { SettingsWorkspace } from '../modules/SettingsModule';
 
 export const MainWorkspace: React.FC = () => {
@@ -24,6 +26,8 @@ export const MainWorkspace: React.FC = () => {
       {activeTab === 'agenda' && <AgendaWorkspace />}
       {activeTab === 'planejamento' && <PlanningWorkspace />}
       {activeTab === 'correcao' && <CorrectionWorkspace />}
+      {activeTab === 'matematica' && <MathWorkspace />}
+      {activeTab === 'redacao' && <EssayWorkspace />}
       {activeTab === 'configuracoes' && <SettingsWorkspace />}
     </main>
   );

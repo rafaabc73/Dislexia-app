@@ -5,6 +5,8 @@ export type ActivityTab =
   | 'agenda'
   | 'planejamento'
   | 'correcao'
+  | 'matematica'
+  | 'redacao'
   | 'configuracoes';
 
 export type MobilePane = 'sidebar' | 'workspace' | 'chat';
@@ -225,6 +227,102 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   wasRedirected?: boolean;
+}
+
+export interface MathStep {
+  stepNumber: number;
+  actionTitle: string;
+  calculation: string;
+  explanation: string;
+}
+
+export interface MathQuestionResolution {
+  questionNumber: number;
+  statement: string;
+  topic: string;
+  whatToDoSummary: string;
+  steps: MathStep[];
+  finalAnswer: string;
+  attentionTip: string;
+}
+
+export interface MathResolutionList {
+  id: string;
+  title: string;
+  createdAt: string;
+  formattedDate: string;
+  imageUrls?: string[];
+  sourceText?: string;
+  questions: MathQuestionResolution[];
+}
+
+export type EssayMode = 'correcao' | 'praticar';
+export type EssayPracticeScope = 'redacao_completa' | 'paragrafos_especificos';
+export type EssayParagraphType =
+  | 'introducao'
+  | 'desenvolvimento_1'
+  | 'desenvolvimento_2'
+  | 'conclusao';
+
+export interface EnemCompetencyScore {
+  number: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  score: number;
+  analysis: string;
+  practicalSuggestions: string[];
+}
+
+export interface EssayCorrectionItem {
+  id: string;
+  title: string;
+  theme: string;
+  createdAt: string;
+  formattedDate: string;
+  imageUrls?: string[];
+  transcribedEssay: string;
+  totalScore: number;
+  generalAnalysis: string;
+  competencies: EnemCompetencyScore[];
+  simpleActionPlan: Array<{
+    whatHappened: string;
+    howToFixPractically: string;
+    exampleRewrite: string;
+  }>;
+}
+
+export interface EssayLegoBlock {
+  id: string;
+  blockNumber: number;
+  blockLabel: string;
+  enemCriterion: string;
+  colorHex: string;
+  whatToWrite: string;
+  suggestedConnectors: string[];
+  guidedTemplate: string;
+  themeExample: string;
+  userText: string;
+}
+
+export interface EssayLegoParagraph {
+  paragraphType: EssayParagraphType;
+  title: string;
+  subtitle: string;
+  goalDescription: string;
+  blocks: EssayLegoBlock[];
+}
+
+export interface EssayPracticeSession {
+  id: string;
+  themeTitle: string;
+  themeSource: 'gerado_ia' | 'arquivo_enviado';
+  motivatingContext: string;
+  enemAxis: string;
+  createdAt: string;
+  formattedDate: string;
+  imageUrls?: string[];
+  practiceScope: EssayPracticeScope;
+  selectedParagraphs: EssayParagraphType[];
+  paragraphs: EssayLegoParagraph[];
 }
 
 export interface AppSettings {

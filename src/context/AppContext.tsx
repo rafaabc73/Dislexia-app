@@ -9,6 +9,10 @@ import {
   AgendaItem,
   StudyPlan,
   ExamCorrection,
+  MathResolutionList,
+  EssayMode,
+  EssayCorrectionItem,
+  EssayPracticeSession,
   AppSettings,
   ChatMessage,
 } from '../types';
@@ -93,6 +97,25 @@ interface AppContextType {
   activeCorrection: ExamCorrection | null;
   setActiveCorrection: (corr: ExamCorrection | null) => void;
 
+  // Módulo Matemática (Resolução Passo a Passo)
+  mathResolutions: MathResolutionList[];
+  addMathResolution: (item: MathResolutionList) => void;
+  activeMathResolution: MathResolutionList | null;
+  setActiveMathResolution: (item: MathResolutionList | null) => void;
+
+  // Módulo Redação (Correção ENEM + Praticar em Blocos LEGO)
+  essayMode: EssayMode;
+  setEssayMode: (mode: EssayMode) => void;
+  essayCorrections: EssayCorrectionItem[];
+  addEssayCorrection: (item: EssayCorrectionItem) => void;
+  activeEssayCorrection: EssayCorrectionItem | null;
+  setActiveEssayCorrection: (item: EssayCorrectionItem | null) => void;
+  essayPracticeSessions: EssayPracticeSession[];
+  addEssayPracticeSession: (item: EssayPracticeSession) => void;
+  updateEssayPracticeSession: (item: EssayPracticeSession) => void;
+  activeEssayPractice: EssayPracticeSession | null;
+  setActiveEssayPractice: (item: EssayPracticeSession | null) => void;
+
   // Configurações e Tema
   settings: AppSettings;
   updateSettings: (partial: Partial<AppSettings>) => void;
@@ -142,6 +165,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [corrections, setCorrections] = useState<ExamCorrection[]>([]);
   const [activeCorrection, setActiveCorrection] = useState<ExamCorrection | null>(null);
+
+  const [mathResolutions, setMathResolutions] = useState<MathResolutionList[]>([]);
+  const [activeMathResolution, setActiveMathResolution] = useState<MathResolutionList | null>(null);
+
+  const [essayMode, setEssayMode] = useState<EssayMode>('praticar');
+  const [essayCorrections, setEssayCorrections] = useState<EssayCorrectionItem[]>([]);
+  const [activeEssayCorrection, setActiveEssayCorrection] = useState<EssayCorrectionItem | null>(null);
+  const [essayPracticeSessions, setEssayPracticeSessions] = useState<EssayPracticeSession[]>([]);
+  const [activeEssayPractice, setActiveEssayPractice] = useState<EssayPracticeSession | null>(null);
 
   const [isChatMinimized, setIsChatMinimized] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -205,6 +237,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedAgenda = await loadFromStorage<AgendaItem[]>('agenda_v2', []);
       const savedPlans = await loadFromStorage<StudyPlan[]>('plans_v2', []);
       const savedCorrections = await loadFromStorage<ExamCorrection[]>('corrections_v2', []);
+      const savedMath = await loadFromStorage<MathResolutionList[]>('mathResolutions_v2', []);
+      const savedEssayCorrs = await loadFromStorage<EssayCorrectionItem[]>('essayCorrections_v2', []);
+      const savedEssayPractice = await loadFromStorage<EssayPracticeSession[]>('essayPractice_v2', []);
 
       setDocuments(savedDocs);
       setArtifacts(savedArts);
@@ -215,6 +250,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedPlans.length > 0) setActiveStudyPlan(savedPlans[0]);
       setCorrections(savedCorrections);
       if (savedCorrections.length > 0) setActiveCorrection(savedCorrections[0]);
+      setMathResolutions(savedMath);
+      if (savedMath.length > 0) setActiveMathResolution(savedMath[0]);
+      setEssayCorrections(savedEssayCorrs);
+      if (savedEssayCorrs.length > 0) setActiveEssayCorrection(savedEssayCorrs[0]);
+      setEssayPracticeSessions(savedEssayPractice);
+      if (savedEssayPractice.length > 0) setActiveEssayPractice(savedEssayPractice[0]);
       setHydrated(true);
     })();
   }, []);
@@ -271,6 +312,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (hydrated) saveToStorage('corrections_v2', corrections);
   }, [corrections, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) saveToStorage('mathResolutions_v2', mathResolutions);
+  }, [mathResolutions, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) saveToStorage('essayCorrections_v2', essayCorrections);
+  }, [essayCorrections, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) saveToStorage('essayPractice_v2', essayPracticeSessions);
+  }, [essayPracticeSessions, hydrated]);
 
   const updateSettings = (partial: Partial<AppSettings>) => {
     setSettings((prev) => ({ ...prev, ...partial }));
@@ -391,6 +444,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const addMathResolution = (item: MathResolutionList) => {
+    setMathResolutions((prev) => [item, ...prev]);
+    setActiveMathResolution(item);
+  };
+
+  const addEssayCorrection = (item: EssayCorrectionItem) => {
+    setEssayCorrections((prev) => [item, ...prev]);
+    setActiveEssayCorrection(item);
+  };
+
+  const addEssayPracticeSession = (item: EssayPracticeSession) => {
+    setEssayPracticeSessions((prev) => [item, ...prev]);
+    setActiveEssayPractice(item);
+  };
+
+  const updateEssayPracticeSession = (item: EssayPracticeSession) => {
+    setEssayPracticeSessions((prev) =>
+      prev.map((s) => (s.id === item.id ? item : s))
+    );
+    if (activeEssayPractice?.id === item.id) {
+      setActiveEssayPractice(item);
+    }
+  };
+
   const addChatMessage = (msg: ChatMessage) => {
     setChatMessages((prev) => [...prev, msg]);
   };
@@ -482,6 +559,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateCorrectionMode,
         activeCorrection,
         setActiveCorrection,
+        mathResolutions,
+        addMathResolution,
+        activeMathResolution,
+        setActiveMathResolution,
+        essayMode,
+        setEssayMode,
+        essayCorrections,
+        addEssayCorrection,
+        activeEssayCorrection,
+        setActiveEssayCorrection,
+        essayPracticeSessions,
+        addEssayPracticeSession,
+        updateEssayPracticeSession,
+        activeEssayPractice,
+        setActiveEssayPractice,
         settings,
         updateSettings,
         importBackupJson,
