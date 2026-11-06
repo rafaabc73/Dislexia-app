@@ -23,20 +23,13 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Folha de estilo pré-compilada para funcionar ao abrir o index.html direto com 2 cliques -->
+    <!-- Folha de estilo pré-compilada para funcionar em qualquer computador sem tela em branco -->
     <link rel="stylesheet" href="./dist/app.css" />
-    <title>Dislexia App — Estudo Limpo e Focado</title>
+    <title>Dislexia App — Estudo Limpo e Focado (Ambiente Isolado Local)</title>
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // Permite abrir o index.html diretamente com 2 cliques (protocolo file://) sem precisar de servidor
-      if (window.location.protocol === 'file:') {
-        var standaloneScript = document.createElement('script');
-        standaloneScript.src = './dist/app.js';
-        document.body.appendChild(standaloneScript);
-      }
-    </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Bundle pré-compilado: abre instantaneamente em qualquer computador (file:// ou http://127.0.0.1) -->
+    <script defer src="./dist/app.js"></script>
   </body>
 </html>

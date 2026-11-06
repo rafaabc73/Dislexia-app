@@ -36,6 +36,20 @@ const MONTH_FOLDER_MAP: Record<number, string> = {
 
 export default defineConfig({
   plugins: [
+    {
+      name: 'vite-entry-transform',
+      transformIndexHtml: {
+        order: 'pre',
+        handler(html) {
+          return html
+            .replace('<link rel="stylesheet" href="./dist/app.css" />', '')
+            .replace(
+              '<script defer src="./dist/app.js"></script>',
+              '<script type="module" src="/src/main.tsx"></script>'
+            );
+        },
+      },
+    },
     react(),
     tailwindcss(),
     {
@@ -109,6 +123,6 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: true,
+    host: '127.0.0.1',
   },
 });

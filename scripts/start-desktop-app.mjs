@@ -34,7 +34,7 @@ export function createDesktopServer(rootDir = ROOT_DIR) {
   const server = http.createServer((req, res) => {
     const reqUrl = req.url || '/';
 
-    // Endpoint de sincronização física com as pastas reais do computador (Windows, Mac e Linux)
+    // Endpoint de sincronização física com as pastas reais do computador (100% local e isolado)
     if (reqUrl.startsWith('/api/local-fs')) {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -52,8 +52,10 @@ export function createDesktopServer(rootDir = ROOT_DIR) {
         res.end(
           JSON.stringify({
             ok: true,
+            baseDir: currentPath,
             basePath: currentPath,
             platform: os.platform(),
+            isolated: true,
           })
         );
         return;
@@ -80,34 +82,28 @@ export function createDesktopServer(rootDir = ROOT_DIR) {
       }
     }
 
-    // Servir arquivos estáticos do aplicativo (dist/ ou raiz)
+    // Sempre usa o index.html raiz (que carrega ./dist/app.js e ./dist/app.css presentes no GitHub)
     const cleanPath = decodeURIComponent(reqUrl.split('?')[0]);
     let targetFile = '';
 
     if (cleanPath === '/' || cleanPath === '/index.html') {
-      const distIndex = path.join(rootDir, 'dist', 'index.html');
-      targetFile = fs.existsSync(distIndex)
-        ? distIndex
-        : path.join(rootDir, 'index.html');
+      targetFile = path.join(rootDir, 'index.html');
     } else {
-      const candidateDist = path.join(rootDir, 'dist', cleanPath);
       const candidateRoot = path.join(rootDir, cleanPath);
+      const candidateDist = path.join(rootDir, 'dist', cleanPath);
       const candidatePublic = path.join(rootDir, 'public', cleanPath);
 
-      if (fs.existsSync(candidateDist) && fs.statSync(candidateDist).isFile()) {
-        targetFile = candidateDist;
-      } else if (fs.existsSync(candidateRoot) && fs.statSync(candidateRoot).isFile()) {
+      if (fs.existsSync(candidateRoot) && fs.statSync(candidateRoot).isFile()) {
         targetFile = candidateRoot;
+      } else if (fs.existsSync(candidateDist) && fs.statSync(candidateDist).isFile()) {
+        targetFile = candidateDist;
       } else if (
         fs.existsSync(candidatePublic) &&
         fs.statSync(candidatePublic).isFile()
       ) {
         targetFile = candidatePublic;
       } else {
-        const distIndex = path.join(rootDir, 'dist', 'index.html');
-        targetFile = fs.existsSync(distIndex)
-          ? distIndex
-          : path.join(rootDir, 'index.html');
+        targetFile = path.join(rootDir, 'index.html');
       }
     }
 
@@ -115,7 +111,10 @@ export function createDesktopServer(rootDir = ROOT_DIR) {
       const ext = path.extname(targetFile).toLowerCase();
       const contentType = MIME_TYPES[ext] || 'application/octet-stream';
       const content = fs.readFileSync(targetFile);
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache',
+      });
       res.end(content);
     } catch (e) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -130,7 +129,6 @@ function launchDedicatedAppWindow(appUrl) {
   const platform = os.platform();
 
   if (platform === 'win32') {
-    // No Windows 10/11, o Microsoft Edge ou Chrome abre em modo Janela de Aplicativo Nativo (--app=...) sem abas nem barra de endereços, igual ao VS Code
     exec(
       `start msedge --app="${appUrl}" --window-size=1400,900 || start chrome --app="${appUrl}" --window-size=1400,900 || start "" "${appUrl}"`
     );
@@ -138,7 +136,6 @@ function launchDedicatedAppWindow(appUrl) {
   }
 
   if (platform === 'darwin') {
-    // No macOS, tenta abrir como janela dedicada de aplicativo via Chrome/Edge/Brave ou abre o navegador padrão
     const macBrowsers = [
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
@@ -162,7 +159,6 @@ function launchDedicatedAppWindow(appUrl) {
     return;
   }
 
-  // No Linux (Ubuntu, Debian, Fedora, Mint, Arch, etc.)
   const linuxCmd = [
     `google-chrome --app="${appUrl}" --window-size=1400,900`,
     `chromium --app="${appUrl}" --window-size=1400,900`,
@@ -185,7 +181,6 @@ if (isDirectRun) {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      // Se a porta 45678 já estiver aberta em outra instância, apenas abre a janela do aplicativo!
       const existingUrl = `http://127.0.0.1:${preferredPort}`;
       console.log(`Dislexia App já está em execução em ${existingUrl}`);
       launchDedicatedAppWindow(existingUrl);
@@ -195,15 +190,16 @@ if (isDirectRun) {
     }
   });
 
+  // Escuta ESTRITAMENTE em 127.0.0.1 (ambiente 100% isolado no computador local do usuário)
   server.listen(preferredPort, '127.0.0.1', () => {
     const appUrl = `http://127.0.0.1:${preferredPort}`;
     console.log('==========================================================');
-    console.log('  Dislexia App — Modo Aplicativo de Computador (Desktop)');
+    console.log('  Dislexia App — Ambiente 100% Isolado e Local (Desktop)');
     console.log('==========================================================');
     console.log(`• Sistema Operacional: ${os.platform()} (${os.arch()})`);
     console.log(`• Pastas físicas do aluno: ${baseFoldersPath}`);
-    console.log(`• Endereço local do App: ${appUrl}`);
-    console.log('• Mantenha esta janela minimizada enquanto usa o aplicativo.');
+    console.log(`• Endereço privado local: ${appUrl}`);
+    console.log('• Seus dados ficam salvos SOMENTE neste computador.');
     console.log('==========================================================');
 
     if (!process.env.NO_WINDOW) {

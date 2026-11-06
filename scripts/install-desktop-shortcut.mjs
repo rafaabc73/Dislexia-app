@@ -55,7 +55,13 @@ function installMacAppBundle() {
       const launcherScript = `#!/bin/bash
 export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
 cd "${ROOT_DIR}"
-"${nodeBin}" "${path.join(ROOT_DIR, 'scripts', 'start-desktop-app.mjs')}" >/tmp/dislexia-app.log 2>&1 &
+if [ -x "${nodeBin}" ]; then
+  "${nodeBin}" "${path.join(ROOT_DIR, 'scripts', 'start-desktop-app.mjs')}" >/tmp/dislexia-app.log 2>&1 &
+elif command -v node >/dev/null 2>&1; then
+  node "${path.join(ROOT_DIR, 'scripts', 'start-desktop-app.mjs')}" >/tmp/dislexia-app.log 2>&1 &
+else
+  open "${path.join(ROOT_DIR, 'index.html')}"
+fi
 `;
 
       const execFile = path.join(macosDir, 'DislexiaApp');
@@ -148,3 +154,4 @@ if (platform === 'darwin') {
 }
 
 console.log('✨ Instalação concluída com sucesso!');
+
