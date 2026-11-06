@@ -7,7 +7,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/build-standalone.mjs",
+    "build": "tsc -b && vite build && node scripts/build-standalone.mjs && node scripts/build-native-installers.mjs",
     "preview": "vite preview",
     "desktop": "node scripts/start-desktop-app.mjs",
     "install-app": "node scripts/install-desktop-shortcut.mjs",

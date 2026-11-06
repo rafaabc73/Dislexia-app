@@ -22,6 +22,9 @@ export function hasLinkedDirectoryHandle(): boolean {
 }
 
 export async function checkLocalDiskServerStatus(): Promise<string | null> {
+  if (typeof window !== 'undefined' && (window as any).__NATIVE_DESKTOP_BASE_DIR__) {
+    return String((window as any).__NATIVE_DESKTOP_BASE_DIR__);
+  }
   if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
     return null;
   }
@@ -88,6 +91,18 @@ export async function linkAndCreateComputerFolders(selectedYear: string): Promis
  * Salva fisicamente o arquivo PDF/Foto dentro da pasta correspondente no computador do usuário.
  */
 export async function saveDocumentToComputerDisk(doc: StudyDocument): Promise<void> {
+  // 0. Se estiver rodando no Aplicativo Nativo macOS (WKWebView bridge), grava direto em ~/Documents/Pastas_do_Aluno
+  if (
+    typeof window !== 'undefined' &&
+    (window as any).webkit?.messageHandlers?.nativeFs
+  ) {
+    try {
+      (window as any).webkit.messageHandlers.nativeFs.postMessage(doc);
+    } catch {
+      // ignora
+    }
+  }
+
   // 1. Tenta salvar via servidor local (na pasta Pastas_do_Aluno dentro da pasta do aplicativo)
   if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
     try {

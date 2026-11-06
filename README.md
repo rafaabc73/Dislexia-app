@@ -40,21 +40,19 @@ No computador, a tela é dividida de forma limpa em **4 colunas**:
 
 ---
 
-## 💻 Como Instalar e Abrir como Aplicativo de Computador (Estilo VS Code) em Windows, Mac e Linux
+## 💻 Instalação Direta com 1 Clique (Como no VS Code — Windows, Mac e Linux)
 
-O **Dislexia App** foi construído para funcionar exatamente como um **aplicativo de computador (estilo VS Code)** em qualquer sistema operacional (**Windows**, **macOS** e **Linux**):
-- Abre em uma **janela própria de aplicativo** (sem abas de internet e sem barra de endereços para não distrair o aluno).
-- Cria automaticamente um **ícone do aplicativo** na sua Área de Trabalho / Menu Iniciar / Pasta Aplicativos.
-- Cria automaticamente no seu computador a pasta física **`Pastas_do_Aluno/`** com todas as disciplinas, meses e subpastas de provas.
+Você **não precisa instalar Node.js nem usar terminal**! Criamos instaladores oficiais passo a passo na pasta **[`Instaladores/`](./Instaladores)** (e na aba *Releases* do GitHub), onde você baixa apenas 1 arquivo, clica em **Instalar** e o programa é instalado normalmente no seu computador em um ambiente **100% isolado e privado**:
 
-### Passo 1 (Comum para Windows, Mac e Linux): Instalar o Node.js
-Na primeira vez, instale o **Node.js** gratuito (leva menos de 2 minutos):
-1. Acesse o site oficial: **[https://nodejs.org](https://nodejs.org)**
-2. Clique no botão verde **"Baixar Node.js (LTS)"** e instale normalmente clicando em *Avançar / Concluir*.
+| Sistema Operacional | Arquivo do Instalador Direto | Como Funciona |
+| :--- | :--- | :--- |
+| 🍎 **Mac (macOS — Apple Silicon M1/M2/M3/M4 e Intel)** | **[Baixar Instalador Mac (`.pkg`)](https://github.com/rafaabc73/Dislexia-app/raw/main/Instaladores/Instalador_Dislexia_App_Mac.pkg)** *(ou [Imagem `.dmg`](https://github.com/rafaabc73/Dislexia-app/raw/main/Instaladores/Instalador_Dislexia_App_Mac.dmg))* | Abre o **Assistente Oficial de Instalação do Mac** (*Continuar ➔ Instalar*). Instala o aplicativo nativo **`Dislexia App.app`** na sua pasta **Aplicativos (`/Applications`)**, cria `Documentos/Pastas_do_Aluno` e já abre o programa! *(Se o Mac exibir aviso de desenvolvedor na 1ª vez, basta clicar com o **botão direito ➔ Abrir**).* |
+| 🪟 **Windows (Windows 10 e 11)** | **[Baixar Instalador Windows (`Setup`)](https://github.com/rafaabc73/Dislexia-app/raw/main/Instaladores/Instalador_Dislexia_App_Windows.bat)** | Abre a **Janela Gráfica de Instalação do Windows** com barra de progresso e botão **"Instalar Agora"**. Instala em `%LOCALAPPDATA%\Programs\DislexiaApp`, cria `Documentos\Pastas_do_Aluno` e adiciona o ícone na **Área de Trabalho** e no **Menu Iniciar**! |
+| 🐧 **Linux (Ubuntu, Debian, Mint, etc.)** | **[Baixar Instalador Linux (`.deb`)](https://github.com/rafaabc73/Dislexia-app/raw/main/Instaladores/Instalador_Dislexia_App_Linux.deb)** | Pacote `.deb` padrão do Linux. Dê dois cliques para abrir na Central de Aplicativos, clique em **Instalar** e abra pelo Menu de Aplicativos do sistema! |
 
-### Passo 2: Baixar a Pasta do Projeto
-1. Nesta página do GitHub (`https://github.com/rafaabc73/Dislexia-app`), clique no botão verde **`<> Code`** e escolha **"Download ZIP"**.
-2. Extraia (descompacte) o arquivo ZIP no seu computador.
+---
+
+### Opção Alternativa (Para quem baixou a pasta completa do projeto em ZIP)
 
 ---
 

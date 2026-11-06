@@ -12,6 +12,7 @@ node_modules
 dist/*
 !dist/app.js
 !dist/app.css
+!dist/standalone.html
 dist-ssr
 *.local
 *.tsbuildinfo
