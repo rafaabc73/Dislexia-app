@@ -4,26 +4,23 @@ import {
   Camera,
   Plus,
   Bell,
-  CheckCircle2,
+  Check,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { FIXED_SUBJECTS } from '../../constants/curriculum';
+import { FIXED_SUBJECTS, MONTHS_PT } from '../../constants/curriculum';
 import { readFileAsDataUrl } from '../../services/pdfService';
 import { extractAgendaFromPhoto } from '../../services/geminiService';
 
 export const AgendaSidebar: React.FC = () => {
-  const {
-    addAgendaItems,
-    settings,
-    setMobilePane,
-    showToast,
-  } = useApp();
+  const { addAgendaItems, settings, setMobilePane, showToast } = useApp();
 
   const [manualTitle, setManualTitle] = useState('');
   const [manualSubj, setManualSubj] = useState('matematica');
   const [manualDate, setManualDate] = useState(
-    new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10)
+    new Date().toISOString().slice(0, 10)
   );
   const [manualType, setManualType] = useState<
     'tarefa' | 'prova' | 'trabalho' | 'lembrete'
@@ -57,7 +54,7 @@ export const AgendaSidebar: React.FC = () => {
       addAgendaItems(newItems);
       setMobilePane('workspace');
       showToast(
-        `${newItems.length} compromisso(s) registrado(s) automaticamente com alerta no calendário!`
+        `${newItems.length} compromisso(s) registrado(s) automaticamente no calendário!`
       );
     } finally {
       setIsScanning(false);
@@ -84,7 +81,7 @@ export const AgendaSidebar: React.FC = () => {
     setManualTitle('');
     setManualDesc('');
     setMobilePane('workspace');
-    showToast('Data adicionada na Agenda com alerta!');
+    showToast('Data adicionada no Calendário e na Lista de Tarefas!');
   };
 
   return (
@@ -161,8 +158,11 @@ export const AgendaSidebar: React.FC = () => {
         <div className="text-xs font-bold">✍️ Cadastrar Data Manualmente:</div>
 
         <div>
-          <label htmlFor="ag-title" className="block text-[11px] font-semibold mb-1">
-            O que vai acontecer?
+          <label
+            htmlFor="ag-title"
+            className="block text-[11px] font-semibold mb-1"
+          >
+            O que precisa fazer ou entregar?
           </label>
           <input
             id="ag-title"
@@ -181,7 +181,10 @@ export const AgendaSidebar: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label htmlFor="ag-type" className="block text-[11px] font-semibold mb-1">
+            <label
+              htmlFor="ag-type"
+              className="block text-[11px] font-semibold mb-1"
+            >
               Tipo:
             </label>
             <select
@@ -202,7 +205,10 @@ export const AgendaSidebar: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="ag-date" className="block text-[11px] font-semibold mb-1">
+            <label
+              htmlFor="ag-date"
+              className="block text-[11px] font-semibold mb-1"
+            >
               Data de Entrega:
             </label>
             <input
@@ -220,7 +226,10 @@ export const AgendaSidebar: React.FC = () => {
         </div>
 
         <div>
-          <label htmlFor="ag-subj" className="block text-[11px] font-semibold mb-1">
+          <label
+            htmlFor="ag-subj"
+            className="block text-[11px] font-semibold mb-1"
+          >
             Disciplina:
           </label>
           <select
@@ -242,7 +251,10 @@ export const AgendaSidebar: React.FC = () => {
         </div>
 
         <div>
-          <label htmlFor="ag-desc" className="block text-[11px] font-semibold mb-1">
+          <label
+            htmlFor="ag-desc"
+            className="block text-[11px] font-semibold mb-1"
+          >
             Observações / Páginas:
           </label>
           <textarea
@@ -275,141 +287,334 @@ export const AgendaSidebar: React.FC = () => {
 export const AgendaWorkspace: React.FC = () => {
   const { agendaItems, toggleAgendaItem, deleteAgendaItem } = useApp();
 
-  const sorted = [...agendaItems].sort((a, b) =>
-    a.dueDate.localeCompare(b.dueDate)
-  );
+  const now = new Date();
+  const [calendarYear, setCalendarYear] = useState(now.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(now.getMonth()); // 0..11
+
+  // Filtra apenas tarefas não realizadas e ordena das mais próximas do vencimento até as mais distantes
+  const pendingItems = agendaItems
+    .filter((item) => !item.completed)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1).getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+  const handlePrevMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear((y) => y - 1);
+    } else {
+      setCalendarMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear((y) => y + 1);
+    } else {
+      setCalendarMonth((m) => m + 1);
+    }
+  };
+
+  const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const monthLabel =
+    MONTHS_PT[calendarMonth]?.name || 'Mês';
+
+  const calendarCells: Array<number | null> = [
+    ...Array.from({ length: firstDayOfMonth }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  const todayIso = now.toISOString().slice(0, 10);
 
   return (
-    <div className="p-5 max-w-4xl mx-auto space-y-5">
-      <div
-        className="rounded-2xl p-5 border flex flex-wrap items-center justify-between gap-3"
+    <div className="p-5 max-w-5xl mx-auto space-y-6">
+      {/* 1. CALENDÁRIO DO MÊS COM MARCAÇÕES NOS DIAS COM TAREFAS/ENTREGAS */}
+      <section
+        aria-labelledby="calendar-heading"
+        className="rounded-2xl p-5 border space-y-4"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
         }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
-            style={{ backgroundColor: 'var(--brand-primary)' }}
-          >
-            <CalendarClock className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold">
-              Calendário de Prazos, Provas e Tarefas
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Alertas visuais claros para evitar esquecimentos (TDA / TDAH)
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {sorted.map((item) => {
-          const subj = FIXED_SUBJECTS.find((s) => s.id === item.subjectId);
-          return (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div
-              key={item.id}
-              className={`rounded-2xl p-4 border flex items-start justify-between gap-3 transition ${
-                item.completed ? 'opacity-60' : ''
-              }`}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              <CalendarClock className="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h1 id="calendar-heading" className="text-lg font-bold">
+                Calendário de {monthLabel} de {calendarYear}
+              </h1>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                Dias marcados possuem tarefas, trabalhos ou provas para entregar
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrevMonth}
+              aria-label="Mês anterior"
+              className="p-2 rounded-xl border cursor-pointer"
               style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor:
-                  item.type === 'prova' && !item.completed
-                    ? '#dc2626'
-                    : 'var(--border-subtle)',
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-subtle)',
               }}
             >
-              <div className="flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => toggleAgendaItem(item.id)}
-                  aria-label={
-                    item.completed
-                      ? 'Desmarcar tarefa concluída'
-                      : 'Marcar como concluída'
-                  }
-                  className={`mt-0.5 w-6 h-6 rounded-lg border flex items-center justify-center cursor-pointer ${
-                    item.completed
-                      ? 'bg-emerald-600 border-emerald-600 text-white'
-                      : ''
-                  }`}
-                >
-                  {item.completed && (
-                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                  )}
-                </button>
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <span className="text-xs font-bold px-2">
+              {monthLabel} / {calendarYear}
+            </span>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              aria-label="Próximo mês"
+              className="p-2 rounded-xl border cursor-pointer"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
-                      style={{
-                        backgroundColor: subj?.color || 'var(--brand-primary)',
-                      }}
-                    >
-                      {subj?.shortName || 'Geral'}
-                    </span>
+        {/* Grade de Dias da Semana */}
+        <div className="grid grid-cols-7 gap-1.5 text-center">
+          {weekDays.map((wd) => (
+            <div
+              key={wd}
+              className="py-1.5 text-xs font-bold uppercase"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {wd}
+            </div>
+          ))}
 
-                    <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        item.type === 'prova'
-                          ? 'bg-red-500/15 text-red-500'
-                          : 'bg-amber-500/15 text-amber-600'
-                      }`}
-                    >
-                      {item.type}
-                    </span>
+          {calendarCells.map((dayNum, idx) => {
+            if (dayNum === null) {
+              return (
+                <div
+                  key={`empty-${idx}`}
+                  className="min-h-[78px] rounded-xl opacity-25"
+                />
+              );
+            }
 
-                    <span className="text-xs font-bold inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <Bell className="w-3.5 h-3.5" aria-hidden="true" />
-                      Prazo: {item.dueDate.split('-').reverse().join('/')}
-                    </span>
+            const dateIso = `${calendarYear}-${String(
+              calendarMonth + 1
+            ).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+            const dayTasks = pendingItems.filter((t) => t.dueDate === dateIso);
+            const isToday = dateIso === todayIso;
+            const hasTasks = dayTasks.length > 0;
 
-                    <span
-                      className="text-[11px]"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      ({item.source === 'foto_quadro'
-                        ? '📸 Foto do Quadro'
-                        : item.source === 'foto_agenda'
-                          ? '📒 Foto da Agenda'
-                          : '✍️ Manual'})
-                    </span>
-                  </div>
-
-                  <h3
-                    className={`text-sm font-bold mt-1 ${
-                      item.completed ? 'line-through' : ''
+            return (
+              <div
+                key={dateIso}
+                className={`min-h-[82px] p-2 rounded-xl border flex flex-col justify-between text-left transition ${
+                  hasTasks ? 'ring-2' : ''
+                }`}
+                style={{
+                  backgroundColor: hasTasks
+                    ? 'var(--bg-subtle)'
+                    : 'var(--bg-canvas)',
+                  borderColor: hasTasks
+                    ? 'var(--brand-primary)'
+                    : isToday
+                      ? '#f59e0b'
+                      : 'var(--border-subtle)',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
+                      isToday ? 'bg-amber-500 text-white' : ''
                     }`}
                   >
-                    {item.title}
-                  </h3>
-                  <p
-                    className="text-xs mt-0.5"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {item.description}
-                  </p>
+                    {dayNum}
+                  </span>
+                  {hasTasks && (
+                    <span
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+                      style={{ backgroundColor: 'var(--brand-primary)' }}
+                    >
+                      {dayTasks.length}
+                    </span>
+                  )}
+                </div>
+
+                {/* Marcações visuais das entregas do dia */}
+                <div className="space-y-1 mt-1">
+                  {dayTasks.slice(0, 2).map((t) => {
+                    const subj = FIXED_SUBJECTS.find(
+                      (s) => s.id === t.subjectId
+                    );
+                    return (
+                      <div
+                        key={t.id}
+                        className="text-[10px] px-1.5 py-0.5 rounded truncate font-semibold text-white"
+                        style={{
+                          backgroundColor:
+                            t.type === 'prova'
+                              ? '#dc2626'
+                              : subj?.color || 'var(--brand-primary)',
+                        }}
+                        title={t.title}
+                      >
+                        {t.title}
+                      </div>
+                    );
+                  })}
+                  {dayTasks.length > 2 && (
+                    <div
+                      className="text-[10px] font-semibold"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      +{dayTasks.length - 2} mais
+                    </div>
+                  )}
                 </div>
               </div>
+            );
+          })}
+        </div>
+      </section>
 
-              <button
-                type="button"
-                onClick={() => deleteAgendaItem(item.id)}
-                aria-label="Remover item da agenda"
-                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" aria-hidden="true" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+      {/* 2. LISTA DE TAREFAS QUE PRECISAM SER FEITAS (DAS MAIS PRÓXIMAS ATÉ AS MAIS DISTANTES) */}
+      <section
+        aria-labelledby="task-list-heading"
+        className="rounded-2xl p-5 border space-y-4"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderColor: 'var(--border-subtle)',
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 id="task-list-heading" className="text-base font-bold">
+              📋 Tarefas e Entregas Pendentes (Do vencimento mais próximo ao
+              mais distante)
+            </h2>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Ao marcar uma tarefa como realizada, ela é concluída e some da
+              lista automaticamente
+            </p>
+          </div>
+          <span
+            className="text-xs font-bold px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: 'var(--bg-subtle)',
+              color: 'var(--brand-primary)',
+            }}
+          >
+            {pendingItems.length} pendente(s)
+          </span>
+        </div>
+
+        {pendingItems.length === 0 ? (
+          <div
+            className="p-6 rounded-xl border border-dashed text-center text-xs"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            Nenhuma tarefa pendente no momento! Use a coluna ao lado para
+            adicionar tarefas manualmente ou enviar uma foto do quadro/agenda.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingItems.map((item) => {
+              const subj = FIXED_SUBJECTS.find((s) => s.id === item.subjectId);
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-2xl p-4 border flex items-start justify-between gap-3 transition"
+                  style={{
+                    backgroundColor: 'var(--bg-canvas)',
+                    borderColor:
+                      item.type === 'prova'
+                        ? '#dc2626'
+                        : 'var(--border-subtle)',
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleAgendaItem(item.id)}
+                      aria-label={`Marcar "${item.title}" como realizada`}
+                      className="mt-0.5 px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition shrink-0"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Realizada</span>
+                    </button>
+
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white"
+                          style={{
+                            backgroundColor:
+                              subj?.color || 'var(--brand-primary)',
+                          }}
+                        >
+                          {subj?.shortName || 'Geral'}
+                        </span>
+
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                            item.type === 'prova'
+                              ? 'bg-red-500/15 text-red-500'
+                              : 'bg-amber-500/15 text-amber-600'
+                          }`}
+                        >
+                          {item.type}
+                        </span>
+
+                        <span className="text-xs font-bold inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <Bell className="w-3.5 h-3.5" aria-hidden="true" />
+                          Vencimento:{' '}
+                          {item.dueDate.split('-').reverse().join('/')}
+                        </span>
+                      </div>
+
+                      <h3 className="text-sm font-bold mt-1">{item.title}</h3>
+                      <p
+                        className="text-xs mt-0.5"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteAgendaItem(item.id)}
+                    aria-label="Excluir tarefa"
+                    className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
-

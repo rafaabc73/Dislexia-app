@@ -18,23 +18,31 @@ async function callGeminiJson<T>(
   apiKey: string,
   model: string,
   prompt: string,
-  inlineData?: GeminiInlineData
+  inlineData?: GeminiInlineData | GeminiInlineData[]
 ): Promise<T | null> {
   if (!apiKey || !apiKey.trim()) return null;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
 
   const parts: any[] = [{ text: prompt }];
-  if (inlineData && inlineData.data) {
-    const base64Clean = inlineData.data.includes(',')
-      ? inlineData.data.split(',')[1]
-      : inlineData.data;
-    parts.push({
-      inlineData: {
-        mimeType: inlineData.mimeType,
-        data: base64Clean,
-      },
-    });
+  const dataList = Array.isArray(inlineData)
+    ? inlineData
+    : inlineData
+      ? [inlineData]
+      : [];
+
+  for (const item of dataList) {
+    if (item && item.data) {
+      const base64Clean = item.data.includes(',')
+        ? item.data.split(',')[1]
+        : item.data;
+      parts.push({
+        inlineData: {
+          mimeType: item.mimeType,
+          data: base64Clean,
+        },
+      });
+    }
   }
 
   try {
@@ -447,27 +455,35 @@ Retorne um JSON: { "feedback": "elogie o que acertou e complemente com carinho s
 export async function processBoardPhoto(
   title: string,
   subjectId: string,
-  mimeType: string,
-  dataUrl: string,
+  photos: Array<{ mimeType: string; dataUrl: string }>,
   apiKey: string,
   model: string
 ): Promise<Omit<BoardCopyItem, 'id' | 'createdAt' | 'formattedDate'>> {
-  if (apiKey.trim() && dataUrl) {
+  const imageUrls = photos.map((p) => p.dataUrl);
+  const firstImage = imageUrls[0];
+
+  if (apiKey.trim() && photos.length > 0) {
     const prompt = `Você é um assistente especialista em ajudar alunos com dislexia a copiarem o quadro da sala de aula.
-Analise esta foto do quadro/lousa e retorne um JSON com:
-- "transcribedText": todo o conteúdo do quadro passado a limpo, bem organizado em tópicos claros, sem abreviações confusas.
-- "studyCards": lista de 3 a 5 cartões de estudo [{"front": "Pergunta clara sobre o quadro", "back": "Resposta direta"}] baseados na lousa.`;
+Analise esta(s) ${photos.length} foto(s) do quadro/lousa e retorne um JSON com:
+- "transcribedText": todo o conteúdo de todas as fotos do quadro passado a limpo, unificado e bem organizado em tópicos claros, sem abreviações confusas.
+- "studyCards": lista de 3 a 6 cartões de estudo [{"front": "Pergunta clara sobre o quadro", "back": "Resposta direta"}] baseados na lousa.`;
+
+    const inlineItems = photos.map((p) => ({
+      mimeType: p.mimeType,
+      data: p.dataUrl,
+    }));
 
     const res = await callGeminiJson<{
       transcribedText: string;
       studyCards: Array<{ front: string; back: string }>;
-    }>(apiKey, model, prompt, { mimeType, data: dataUrl });
+    }>(apiKey, model, prompt, inlineItems);
 
     if (res && res.transcribedText) {
       return {
-        title: title || 'Quadro da Aula Passado a Limpo',
+        title: title || `Quadro da Aula (${photos.length} foto${photos.length > 1 ? 's' : ''})`,
         subjectId,
-        imageUrl: dataUrl,
+        imageUrl: firstImage,
+        imageUrls,
         transcribedText: res.transcribedText,
         studyCards: res.studyCards || [],
       };
@@ -475,18 +491,19 @@ Analise esta foto do quadro/lousa e retorne um JSON com:
   }
 
   return {
-    title: title || 'Anotações do Quadro Organizadas',
+    title: title || `Anotações do Quadro (${photos.length} foto${photos.length > 1 ? 's' : ''})`,
     subjectId,
-    imageUrl: dataUrl,
-    transcribedText: `QUADRO PASSADO A LIMPO (${title || 'Aula do Dia'})\n\n• Tópico Central: Conceitos fundamentais explicados pelo professor na lousa.\n• Ponto 1: Definição clara e direta sem poluição visual.\n• Ponto 2: Exemplo resolvido passo a passo no quadro.\n• Lembrete do Professor: Revisar os exercícios marcados para a próxima aula.`,
+    imageUrl: firstImage,
+    imageUrls,
+    transcribedText: `QUADRO PASSADO A LIMPO (${title || 'Aula do Dia'} — ${photos.length} foto${photos.length > 1 ? 's' : ''} enviada${photos.length > 1 ? 's' : ''})\n\n• Tópico Central: Conceitos fundamentais explicados pelo professor na lousa.\n• Ponto 1: Definição clara e direta sem poluição visual.\n• Ponto 2: Exemplo resolvido passo a passo no quadro.\n• Dica: Para transcrição automática completa da letra do professor nas fotos, configure sua chave gratuita do Google Gemini em Ajustes.`,
     studyCards: [
       {
         front: `Qual foi o tema principal anotado no quadro "${title || 'da aula'}"?`,
         back: 'Os conceitos principais e o passo a passo prático explicados pelo professor.',
       },
       {
-        front: 'Qual dica importante estava destacada no canto do quadro?',
-        back: 'Revisar os exemplos resolvidos e praticar com calma um passo por vez.',
+        front: 'Quantas fotos do quadro foram reunidas neste estudo?',
+        back: `${photos.length} foto(s) do quadro reunidas e organizadas em um único material.`,
       },
     ],
   };

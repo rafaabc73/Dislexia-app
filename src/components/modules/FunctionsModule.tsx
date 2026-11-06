@@ -16,13 +16,19 @@ import {
   Play,
   Square,
   Upload,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   RotateCw,
+  FolderSearch,
+  X,
+  Check,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { NOTEBOOK_FUNCTIONS, FIXED_SUBJECTS } from '../../constants/curriculum';
+import {
+  NOTEBOOK_FUNCTIONS,
+  FIXED_SUBJECTS,
+  MONTHS_PT,
+} from '../../constants/curriculum';
 import { FunctionType, GeneratedArtifact, StudyDocument } from '../../types';
 import {
   generateStudyFunction,
@@ -68,8 +74,9 @@ export const FunctionsSidebar: React.FC = () => {
   const {
     documents,
     selectedDocument,
-    setSelectedDocument,
     addDocument,
+    selectedFunctionDocIds,
+    setSelectedFunctionDocIds,
     artifacts,
     addArtifact,
     activeArtifact,
@@ -81,12 +88,37 @@ export const FunctionsSidebar: React.FC = () => {
   } = useApp();
 
   const [isGenerating, setIsGenerating] = useState<FunctionType | null>(null);
+  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
+  const [pickerSubjectId, setPickerSubjectId] = useState<string>('portugues');
+  const [pickerMonth, setPickerMonth] = useState<number | 'all'>('all');
+
   const pdfAudioInputRef = useRef<HTMLInputElement | null>(null);
 
+  const selectedDocsList = documents.filter((d) =>
+    selectedFunctionDocIds.includes(d.id)
+  );
+
+  const toggleDocSelection = (docId: string) => {
+    setSelectedFunctionDocIds((prev) =>
+      prev.includes(docId)
+        ? prev.filter((id) => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
   const handleTriggerFunction = async (funcId: FunctionType) => {
-    const targetDoc = selectedDocument || documents[0];
-    if (!targetDoc) {
-      showToast('Carregue ou selecione um documento primeiro!');
+    const targetDocs =
+      selectedDocsList.length > 0
+        ? selectedDocsList
+        : selectedDocument
+          ? [selectedDocument]
+          : [];
+
+    if (targetDocs.length === 0) {
+      setIsSelectorModalOpen(true);
+      showToast(
+        'Selecione os arquivos da matéria que deseja utilizar (ou envie um PDF/Foto)!'
+      );
       return;
     }
 
@@ -94,17 +126,21 @@ export const FunctionsSidebar: React.FC = () => {
     try {
       const content = await generateStudyFunction(
         funcId,
-        [targetDoc],
+        targetDocs,
         settings.geminiApiKey,
         settings.geminiModel
       );
       const funcMeta = NOTEBOOK_FUNCTIONS.find((f) => f.id === funcId);
+      const titleSuffix =
+        targetDocs.length === 1
+          ? targetDocs[0].title
+          : `${targetDocs.length} arquivos selecionados`;
       const newArt: GeneratedArtifact = {
         id: `art-${Date.now()}`,
         functionType: funcId,
-        title: `${funcMeta?.title || funcId} — ${targetDoc.title}`,
-        sourceDocIds: [targetDoc.id],
-        subjectId: targetDoc.subjectId,
+        title: `${funcMeta?.title || funcId} — ${titleSuffix}`,
+        sourceDocIds: targetDocs.map((d) => d.id),
+        subjectId: targetDocs[0].subjectId,
         createdAt: new Date().toLocaleTimeString('pt-BR', {
           hour: '2-digit',
           minute: '2-digit',
@@ -118,8 +154,10 @@ export const FunctionsSidebar: React.FC = () => {
     }
   };
 
-  // Opção especial: Carregar PDF/Livro direto para Transformar Texto em Áudio
-  const handleDirectPdfToAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Carregar PDF/Livro direto para Transformar Texto em Áudio
+  const handleDirectPdfToAudio = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsGenerating('texto_em_audio');
@@ -164,7 +202,7 @@ export const FunctionsSidebar: React.FC = () => {
         title: `Audiolivro / Texto em Áudio — ${newDoc.title}`,
         sourceDocIds: [newDoc.id],
         subjectId: newDoc.subjectId,
-        createdAt: now.toLocaleTimeString('pt-BR', {
+        createdAt: new Date().toLocaleTimeString('pt-BR', {
           hour: '2-digit',
           minute: '2-digit',
         }),
@@ -177,6 +215,13 @@ export const FunctionsSidebar: React.FC = () => {
       if (pdfAudioInputRef.current) pdfAudioInputRef.current.value = '';
     }
   };
+
+  // Documentos filtrados dentro da tela de seleção por Matéria e Mês
+  const pickerSubjectDocs = documents.filter(
+    (d) =>
+      d.subjectId === pickerSubjectId &&
+      (pickerMonth === 'all' || d.month === pickerMonth)
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -194,34 +239,45 @@ export const FunctionsSidebar: React.FC = () => {
           </p>
         </div>
 
+        {/* Campo Material Selecionado: Abre a tela de seleção por Matéria e Mês (múltiplos arquivos/meses) */}
         <div>
-          <label
-            htmlFor="function-source-doc"
+          <span
             className="block text-xs font-semibold mb-1"
             style={{ color: 'var(--text-secondary)' }}
           >
             Material Selecionado:
-          </label>
-          <select
-            id="function-source-doc"
-            value={selectedDocument?.id || ''}
-            onChange={(e) => {
-              const found = documents.find((d) => d.id === e.target.value);
-              if (found) setSelectedDocument(found);
-            }}
-            className="w-full rounded-xl px-2.5 py-2 text-xs font-medium border cursor-pointer"
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsSelectorModalOpen(true)}
+            className="w-full rounded-xl px-3 py-2.5 text-xs font-semibold border flex items-center justify-between gap-2 cursor-pointer transition hover:opacity-90"
             style={{
               backgroundColor: 'var(--bg-subtle)',
-              borderColor: 'var(--border-subtle)',
+              borderColor: 'var(--brand-primary)',
               color: 'var(--text-primary)',
             }}
           >
-            {documents.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.title}
-              </option>
-            ))}
-          </select>
+            <span className="flex items-center gap-2 truncate">
+              <FolderSearch
+                className="w-4 h-4 shrink-0"
+                style={{ color: 'var(--brand-primary)' }}
+                aria-hidden="true"
+              />
+              <span className="truncate">
+                {selectedDocsList.length === 0
+                  ? 'Clique para selecionar matéria e arquivos...'
+                  : selectedDocsList.length === 1
+                    ? selectedDocsList[0].title
+                    : `${selectedDocsList.length} arquivos selecionados`}
+              </span>
+            </span>
+            <span
+              className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white shrink-0"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              Selecionar
+            </span>
+          </button>
         </div>
 
         {/* Atalho Rápido: Carregar PDF/Livro direto para Áudio */}
@@ -238,7 +294,7 @@ export const FunctionsSidebar: React.FC = () => {
           className="w-full py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-90"
           style={{
             backgroundColor: 'var(--bg-subtle)',
-            borderColor: 'var(--brand-primary)',
+            borderColor: 'var(--border-subtle)',
             color: 'var(--brand-primary)',
           }}
         >
@@ -266,7 +322,9 @@ export const FunctionsSidebar: React.FC = () => {
                   backgroundColor: isCurrentType
                     ? 'var(--bg-subtle)'
                     : 'var(--bg-surface)',
-                  borderColor: isCurrentType ? fn.color : 'var(--border-subtle)',
+                  borderColor: isCurrentType
+                    ? fn.color
+                    : 'var(--border-subtle)',
                 }}
               >
                 <div
@@ -277,7 +335,9 @@ export const FunctionsSidebar: React.FC = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold truncate">{fn.title}</span>
+                    <span className="text-xs font-bold truncate">
+                      {fn.title}
+                    </span>
                     {fn.badge && (
                       <span
                         className="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0"
@@ -342,18 +402,297 @@ export const FunctionsSidebar: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* TELA / MODAL PARA SELECIONAR MATÉRIA, MÊS E MÚLTIPLOS ARQUIVOS (DE MESES DIFERENTES) */}
+      {isSelectorModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="material-picker-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border shadow-xl flex flex-col max-h-[85vh] overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            {/* Topo do Seletor */}
+            <div
+              className="p-4 border-b flex items-center justify-between"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              <div>
+                <h2 id="material-picker-title" className="text-base font-bold">
+                  Selecionar Material de Estudo
+                </h2>
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Escolha a matéria, filtre pelo mês e marque os arquivos que
+                  deseja utilizar (você pode marcar arquivos de meses
+                  diferentes!)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSelectorModalOpen(false)}
+                aria-label="Fechar janela de seleção"
+                className="p-1.5 rounded-xl border cursor-pointer"
+                style={{ borderColor: 'var(--border-subtle)' }}
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            {/* Corpo do Seletor: 1. Matéria | 2. Mês | 3. Lista de Arquivos com Checkbox */}
+            <div className="p-4 overflow-y-auto space-y-4 flex-1">
+              {/* 1. Seleção da Matéria (Disciplina) */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5">
+                  1. Selecione a Matéria (Disciplina):
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {FIXED_SUBJECTS.map((subj) => {
+                    const active = pickerSubjectId === subj.id;
+                    const countInSubj = documents.filter(
+                      (d) => d.subjectId === subj.id
+                    ).length;
+                    return (
+                      <button
+                        key={subj.id}
+                        type="button"
+                        onClick={() => setPickerSubjectId(subj.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer flex items-center gap-1.5 ${
+                          active ? 'text-white' : ''
+                        }`}
+                        style={{
+                          backgroundColor: active
+                            ? subj.color
+                            : 'var(--bg-subtle)',
+                          borderColor: active
+                            ? subj.color
+                            : 'var(--border-subtle)',
+                        }}
+                      >
+                        <span>{subj.shortName}</span>
+                        {countInSubj > 0 && (
+                          <span className="text-[10px] opacity-90">
+                            ({countInSubj})
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Seleção do Mês (Podendo alternar de mês sem perder os marcados) */}
+              <div>
+                <label className="block text-xs font-bold mb-1.5">
+                  2. Filtrar por Mês (marque arquivos de um ou vários meses):
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPickerMonth('all')}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold border cursor-pointer ${
+                      pickerMonth === 'all' ? 'text-white' : ''
+                    }`}
+                    style={{
+                      backgroundColor:
+                        pickerMonth === 'all'
+                          ? 'var(--brand-primary)'
+                          : 'var(--bg-subtle)',
+                      borderColor:
+                        pickerMonth === 'all'
+                          ? 'var(--brand-primary)'
+                          : 'var(--border-subtle)',
+                    }}
+                  >
+                    Todos os Meses
+                  </button>
+                  {MONTHS_PT.map((m) => {
+                    const activeM = pickerMonth === m.number;
+                    const countM = documents.filter(
+                      (d) =>
+                        d.subjectId === pickerSubjectId && d.month === m.number
+                    ).length;
+                    return (
+                      <button
+                        key={m.number}
+                        type="button"
+                        onClick={() => setPickerMonth(m.number)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border cursor-pointer ${
+                          activeM ? 'text-white font-bold' : ''
+                        }`}
+                        style={{
+                          backgroundColor: activeM
+                            ? 'var(--brand-primary)'
+                            : 'var(--bg-subtle)',
+                          borderColor: activeM
+                            ? 'var(--brand-primary)'
+                            : 'var(--border-subtle)',
+                        }}
+                      >
+                        {m.short} {countM > 0 ? `(${countM})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Lista de Arquivos para Marcar */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold">
+                    3. Marque os Arquivos que Deseja Utilizar:
+                  </span>
+                  {pickerSubjectDocs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ids = pickerSubjectDocs.map((d) => d.id);
+                        setSelectedFunctionDocIds((prev) =>
+                          Array.from(new Set([...prev, ...ids]))
+                        );
+                      }}
+                      className="text-xs font-semibold underline cursor-pointer"
+                      style={{ color: 'var(--brand-primary)' }}
+                    >
+                      Marcar todos desta lista
+                    </button>
+                  )}
+                </div>
+
+                {pickerSubjectDocs.length === 0 ? (
+                  <div
+                    className="p-6 rounded-xl border border-dashed text-center text-xs"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Nenhum arquivo encontrado nesta matéria/mês. Carregue seus
+                    PDFs ou fotos na aba <strong>Pastas</strong>!
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {pickerSubjectDocs.map((doc) => {
+                      const isChecked = selectedFunctionDocIds.includes(doc.id);
+                      const mName = MONTHS_PT.find(
+                        (m) => m.number === doc.month
+                      )?.name;
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => toggleDocSelection(doc.id)}
+                          role="checkbox"
+                          aria-checked={isChecked}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              toggleDocSelection(doc.id);
+                            }
+                          }}
+                          className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition ${
+                            isChecked ? 'ring-2 font-semibold' : ''
+                          }`}
+                          style={{
+                            backgroundColor: isChecked
+                              ? 'var(--bg-subtle)'
+                              : 'var(--bg-canvas)',
+                            borderColor: isChecked
+                              ? 'var(--brand-primary)'
+                              : 'var(--border-subtle)',
+                          }}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
+                                isChecked ? 'text-white' : ''
+                              }`}
+                              style={{
+                                backgroundColor: isChecked
+                                  ? 'var(--brand-primary)'
+                                  : 'transparent',
+                                borderColor: isChecked
+                                  ? 'var(--brand-primary)'
+                                  : 'var(--border-subtle)',
+                              }}
+                            >
+                              {isChecked && (
+                                <Check
+                                  className="w-3.5 h-3.5"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold truncate">
+                                {doc.title}
+                              </div>
+                              <div
+                                className="text-[11px]"
+                                style={{ color: 'var(--text-secondary)' }}
+                              >
+                                Mês: <strong>{mName}</strong> • Registrado em:{' '}
+                                {doc.formattedDate}
+                                {doc.isExam ? ' • Subpasta Provas' : ''}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Rodapé com Resumo dos Selecionados (inclusive de outros meses) e Botão Confirmar */}
+            <div
+              className="p-4 border-t flex flex-wrap items-center justify-between gap-3"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <div className="text-xs">
+                <strong>{selectedDocsList.length}</strong> arquivo(s)
+                selecionado(s) no total
+                {selectedDocsList.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFunctionDocIds([])}
+                    className="ml-2 text-red-500 underline cursor-pointer"
+                  >
+                    Limpar seleção
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSelectorModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                Confirmar Seleção ({selectedDocsList.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export const FunctionsWorkspace: React.FC = () => {
-  const {
-    activeArtifact,
-    updateArtifact,
-    selectedDocument,
-    addArtifact,
-    settings,
-  } = useApp();
+  const { activeArtifact, updateArtifact, selectedDocument, settings } =
+    useApp();
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeSentenceIdx, setActiveSentenceIdx] = useState<number>(0);
@@ -363,84 +702,14 @@ export const FunctionsWorkspace: React.FC = () => {
   const [dictatingQuestionId, setDictatingQuestionId] = useState<string | null>(
     null
   );
-  const [evaluatingQuestionId, setEvaluatingQuestionId] = useState<string | null>(
-    null
-  );
-  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
+  const [evaluatingQuestionId, setEvaluatingQuestionId] = useState<
+    string | null
+  >(null);
 
-  const handleQuickCreate = async (funcType: FunctionType) => {
-    if (!selectedDocument) return;
-    setIsQuickGenerating(true);
-    try {
-      const content = await generateStudyFunction(
-        funcType,
-        [selectedDocument],
-        settings.geminiApiKey,
-        settings.geminiModel
-      );
-      const meta = NOTEBOOK_FUNCTIONS.find((f) => f.id === funcType);
-      addArtifact({
-        id: `art-${Date.now()}`,
-        functionType: funcType,
-        title: `${meta?.title || funcType} — ${selectedDocument.title}`,
-        sourceDocIds: [selectedDocument.id],
-        subjectId: selectedDocument.subjectId,
-        createdAt: new Date().toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        content,
-      });
-    } finally {
-      setIsQuickGenerating(false);
-    }
-  };
-
+  // REGRA OBRIGATÓRIA: Quando o usuário clicar em Funções, a segunda tela mais à direita
+  // fica VAZIA, só aparecendo informações quando ele clicar em uma função específica!
   if (!activeArtifact) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto space-y-5">
-        <div
-          className="rounded-2xl p-6 border text-center space-y-4"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center text-white"
-            style={{ backgroundColor: 'var(--brand-primary)' }}
-          >
-            <Sparkles className="w-6 h-6" aria-hidden="true" />
-          </div>
-          <h1 className="text-lg font-bold">
-            Escolha uma Função na 2ª Coluna para Transformar seu Estudo
-          </h1>
-          <p
-            className="text-sm max-w-xl mx-auto"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Documento selecionado no momento:{' '}
-            <strong>{selectedDocument?.title || 'Nenhum'}</strong>. Clique em qualquer
-            retângulo ao lado ou nos atalhos abaixo para gerar resumos em áudio,
-            mapas mentais, provas interativas por voz ou demonstrações práticas!
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 pt-2">
-            {NOTEBOOK_FUNCTIONS.slice(0, 6).map((fn) => (
-              <button
-                key={fn.id}
-                type="button"
-                disabled={isQuickGenerating}
-                onClick={() => handleQuickCreate(fn.id)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer"
-                style={{ backgroundColor: fn.color }}
-              >
-                Gerar {fn.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="h-full w-full" />;
   }
 
   const { functionType, content } = activeArtifact;
@@ -464,7 +733,6 @@ export const FunctionsWorkspace: React.FC = () => {
     );
   };
 
-  // Atualizar resposta de questão na Prova Interativa
   const handleUpdateExamAnswer = (qId: string, newText: string) => {
     if (!content.discursiveExam) return;
     const updatedExam = content.discursiveExam.map((q) =>
@@ -476,8 +744,10 @@ export const FunctionsWorkspace: React.FC = () => {
     });
   };
 
-  // Ditado por Voz para Responder a Prova Interativa
-  const handleToggleQuestionDictation = (qId: string, currentAnswer: string = '') => {
+  const handleToggleQuestionDictation = (
+    qId: string,
+    currentAnswer: string = ''
+  ) => {
     if (dictatingQuestionId === qId) {
       speechService.stopDictation();
       setDictatingQuestionId(null);
@@ -499,7 +769,6 @@ export const FunctionsWorkspace: React.FC = () => {
     );
   };
 
-  // Avaliar Resposta Discursiva com IA
   const handleEvaluateDiscursive = async (qId: string) => {
     const qObj = content.discursiveExam?.find((q) => q.id === qId);
     if (!qObj) return;
@@ -586,7 +855,8 @@ export const FunctionsWorkspace: React.FC = () => {
       </div>
 
       {/* 1 & 10: RESUMO EM ÁUDIO / TRANSFORMAR TEXTO EM ÁUDIO */}
-      {(functionType === 'resumo_audio' || functionType === 'texto_em_audio') && (
+      {(functionType === 'resumo_audio' ||
+        functionType === 'texto_em_audio') && (
         <div
           className="rounded-2xl p-5 border space-y-4"
           style={{
@@ -595,11 +865,11 @@ export const FunctionsWorkspace: React.FC = () => {
           }}
         >
           <h2 className="text-base font-bold">
-            🎧 Leitura Acompanhada (Destaque Visual para Dislexia)
+            🎧 Leitura Acompanhada com Pausas Naturais
           </h2>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            Clique em "Ouvir em Voz Alta" no topo ou toque em qualquer frase abaixo
-            para ouvi-la individualmente:
+            Clique em "Ouvir em Voz Alta" no topo ou toque em qualquer frase
+            abaixo para ouvi-la individualmente:
           </p>
 
           <div className="space-y-2">
@@ -630,7 +900,10 @@ export const FunctionsWorkspace: React.FC = () => {
           </div>
 
           {content.dialogueLines && content.dialogueLines.length > 0 && (
-            <div className="pt-4 border-t space-y-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div
+              className="pt-4 border-t space-y-2.5"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
               <h3 className="text-sm font-bold">
                 🎙️ Bate-Papo de Estudo (Estilo Podcast NotebookLM)
               </h3>
@@ -703,7 +976,7 @@ export const FunctionsWorkspace: React.FC = () => {
                       type="button"
                       onClick={() =>
                         speechService.speak(
-                          `${currentSlide.title}. ${currentSlide.narration}`,
+                          `${currentSlide.title}.\n${currentSlide.narration}`,
                           settings.speechRate
                         )
                       }
@@ -743,7 +1016,8 @@ export const FunctionsWorkspace: React.FC = () => {
                         borderColor: 'var(--border-subtle)',
                       }}
                     >
-                      🎨 <strong>Associação Visual:</strong> {currentSlide.visualHint}
+                      🎨 <strong>Associação Visual:</strong>{' '}
+                      {currentSlide.visualHint}
                     </div>
                   </div>
 
@@ -847,7 +1121,9 @@ export const FunctionsWorkspace: React.FC = () => {
             borderColor: 'var(--border-subtle)',
           }}
         >
-          <h2 className="text-base font-bold">📝 Relatório e Resumo Estruturado</h2>
+          <h2 className="text-base font-bold">
+            📝 Relatório e Resumo Estruturado
+          </h2>
           <div
             className="dyslexia-reading-area p-4 rounded-xl border whitespace-pre-line"
             style={{
@@ -883,9 +1159,7 @@ export const FunctionsWorkspace: React.FC = () => {
                   backgroundColor: isFlipped
                     ? 'var(--bg-subtle)'
                     : 'var(--bg-surface)',
-                  borderColor: isFlipped
-                    ? '#16a34a'
-                    : 'var(--border-subtle)',
+                  borderColor: isFlipped ? '#16a34a' : 'var(--border-subtle)',
                 }}
               >
                 <div className="flex items-center justify-between text-xs font-bold">
@@ -963,7 +1237,7 @@ export const FunctionsWorkspace: React.FC = () => {
                     type="button"
                     onClick={() =>
                       speechService.speak(
-                        `${q.question}. Alternativas: ${q.options.join('. ')}`,
+                        `${q.question}.\nAlternativas:\n${q.options.join('.\n')}`,
                         settings.speechRate
                       )
                     }
@@ -1035,7 +1309,9 @@ export const FunctionsWorkspace: React.FC = () => {
             borderColor: 'var(--border-subtle)',
           }}
         >
-          <h2 className="text-base font-bold">{content.infographic.subtitle}</h2>
+          <h2 className="text-base font-bold">
+            {content.infographic.subtitle}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {content.infographic.steps.map((step, i) => (
               <div
@@ -1122,7 +1398,7 @@ export const FunctionsWorkspace: React.FC = () => {
         </div>
       )}
 
-      {/* 11: PROVA INTERATIVA (FORMATO DISCURSIVO COM ÁUDIO DA QUESTÃO E RESPOSTA POR ÁUDIO/DITADO) */}
+      {/* 11: PROVA INTERATIVA (DISCURSIVA COM ÁUDIO E DITADO) */}
       {functionType === 'prova_interativa' && content.discursiveExam && (
         <div className="space-y-4">
           <div
@@ -1133,9 +1409,13 @@ export const FunctionsWorkspace: React.FC = () => {
             }}
           >
             <div>
-              <strong>🎙️ Prova Interativa Discursiva (Acessível para Dislexia):</strong>{' '}
-              Clique em <strong>"Ouvir Pergunta"</strong> para escutar o enunciado e em{' '}
-              <strong>"Responder por Voz (Ditado)"</strong> para falar sua resposta!
+              <strong>
+                🎙️ Prova Interativa Discursiva (Acessível para Dislexia):
+              </strong>{' '}
+              Clique em <strong>"Ouvir Pergunta"</strong> para escutar o
+              enunciado com pausas naturais e em{' '}
+              <strong>"Responder como Áudio / Ditado"</strong> para falar sua
+              resposta!
             </div>
           </div>
 
@@ -1159,7 +1439,7 @@ export const FunctionsWorkspace: React.FC = () => {
                     type="button"
                     onClick={() =>
                       speechService.speak(
-                        `Questão ${idx + 1}. ${q.question}. Dica: ${q.hint}`,
+                        `Questão ${idx + 1}.\n${q.question}.\nDica: ${q.hint}`,
                         settings.speechRate
                       )
                     }
@@ -1171,7 +1451,10 @@ export const FunctionsWorkspace: React.FC = () => {
                   </button>
                 </div>
 
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   💡 <strong>Dica de Apoio:</strong> {q.hint}
                 </p>
 
@@ -1186,8 +1469,10 @@ export const FunctionsWorkspace: React.FC = () => {
                     id={`exam-answer-${q.id}`}
                     rows={3}
                     value={q.userAnswer || ''}
-                    onChange={(e) => handleUpdateExamAnswer(q.id, e.target.value)}
-                    placeholder="Toque em 'Responder por Áudio/Ditado' abaixo e fale normalmente, ou escreva aqui..."
+                    onChange={(e) =>
+                      handleUpdateExamAnswer(q.id, e.target.value)
+                    }
+                    placeholder="Toque em 'Responder como Áudio / Ditado' abaixo e fale normalmente, ou escreva aqui..."
                     className="w-full rounded-xl p-3 text-sm border"
                     style={{
                       backgroundColor: 'var(--bg-canvas)',
@@ -1225,7 +1510,10 @@ export const FunctionsWorkspace: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Mic className="w-4 h-4 text-red-500" aria-hidden="true" />
+                        <Mic
+                          className="w-4 h-4 text-red-500"
+                          aria-hidden="true"
+                        />
                         <span>Responder como Áudio / Ditado</span>
                       </>
                     )}
@@ -1259,7 +1547,10 @@ export const FunctionsWorkspace: React.FC = () => {
                       <button
                         type="button"
                         onClick={() =>
-                          speechService.speak(q.aiFeedback!, settings.speechRate)
+                          speechService.speak(
+                            q.aiFeedback!,
+                            settings.speechRate
+                          )
                         }
                         className="inline-flex items-center gap-1 font-semibold underline cursor-pointer"
                       >
@@ -1339,4 +1630,3 @@ export const FunctionsWorkspace: React.FC = () => {
     </div>
   );
 };
-

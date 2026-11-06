@@ -8,6 +8,8 @@ import {
   MicOff,
   RotateCcw,
   Sparkles,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { FIXED_SUBJECTS } from '../../constants/curriculum';
@@ -22,6 +24,8 @@ export const FocusedChatColumn: React.FC = () => {
     selectedSubjectId,
     selectedDocument,
     settings,
+    isChatMinimized,
+    setIsChatMinimized,
   } = useApp();
 
   const [input, setInput] = useState('');
@@ -34,8 +38,65 @@ export const FocusedChatColumn: React.FC = () => {
     FIXED_SUBJECTS.find((s) => s.id === selectedSubjectId) || FIXED_SUBJECTS[0];
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isLoading]);
+    if (!isChatMinimized) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isLoading, isChatMinimized]);
+
+  // Estado Minimizado: Pequena coluna lateral estreita igual à 1ª coluna da esquerda (72px)
+  if (isChatMinimized) {
+    return (
+      <aside
+        aria-label="Chat de Inteligência Artificial Minimizado"
+        className="w-[72px] shrink-0 flex flex-col justify-between items-center py-3 select-none border-l"
+        style={{
+          backgroundColor: 'var(--bg-activity)',
+          borderColor: 'var(--border-subtle)',
+        }}
+      >
+        <div className="flex flex-col items-center gap-2 w-full px-1.5">
+          <button
+            type="button"
+            onClick={() => setIsChatMinimized(false)}
+            aria-label="Expandir Chat de Inteligência Artificial"
+            className="w-full py-2.5 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer hover:opacity-100"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--brand-primary)',
+            }}
+          >
+            <PanelRightOpen className="w-5 h-5" aria-hidden="true" />
+            <span className="text-[10px] font-semibold leading-tight text-center">
+              Abrir Chat
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsChatMinimized(false)}
+            aria-label="Tutor IA Focado"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs cursor-pointer mt-1"
+            style={{ backgroundColor: 'var(--brand-primary)' }}
+          >
+            <Sparkles className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center gap-1 px-1 text-center">
+          <ShieldCheck
+            className="w-4 h-4 text-emerald-600"
+            aria-hidden="true"
+          />
+          <span
+            className="text-[9px] leading-tight"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Foco Ativo
+          </span>
+        </div>
+      </aside>
+    );
+  }
 
   const handleSend = async (customText?: string) => {
     const textToSend = (customText ?? input).trim();
@@ -122,23 +183,25 @@ export const FocusedChatColumn: React.FC = () => {
         borderColor: 'var(--border-subtle)',
       }}
     >
-      {/* Cabeçalho do Chat com Indicador de Restrição de Tópico */}
+      {/* Cabeçalho do Chat com Botão Minimizar e Indicador de Restrição de Tópico */}
       <div
         className="p-3.5 border-b flex flex-col gap-2"
         style={{ borderColor: 'var(--border-subtle)' }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-2 min-w-0">
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0"
               style={{ backgroundColor: 'var(--brand-primary)' }}
             >
               <Sparkles className="w-4 h-4" aria-hidden="true" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold leading-tight">Tutor IA Focado</h2>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold leading-tight truncate">
+                Tutor IA Focado
+              </h2>
               <p
-                className="text-xs leading-tight"
+                className="text-xs leading-tight truncate"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 Tira-dúvidas sem distrações
@@ -146,19 +209,35 @@ export const FocusedChatColumn: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={clearChat}
-            className="p-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80 cursor-pointer border"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--text-secondary)',
-            }}
-            aria-label="Limpar histórico do chat"
-          >
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Limpar</span>
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={clearChat}
+              className="p-1.5 rounded-lg text-xs flex items-center gap-1 hover:opacity-80 cursor-pointer border"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-secondary)',
+              }}
+              aria-label="Limpar histórico do chat"
+            >
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsChatMinimized(true)}
+              className="px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 hover:opacity-80 cursor-pointer border"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-primary)',
+              }}
+              aria-label="Minimizar coluna do chat de IA"
+            >
+              <PanelRightClose className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Minimizar</span>
+            </button>
+          </div>
         </div>
 
         {/* Selo de Trava de Tópico TDAH */}
@@ -257,7 +336,7 @@ export const FocusedChatColumn: React.FC = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Sugestões Rápidas para Quem Tem Dislexia Não Precisar Digitar Muito */}
+      {/* Sugestões Rápidas */}
       <div
         className="px-3 py-2 border-t flex flex-wrap gap-1.5"
         style={{ borderColor: 'var(--border-subtle)' }}
@@ -279,7 +358,7 @@ export const FocusedChatColumn: React.FC = () => {
         ))}
       </div>
 
-      {/* Campo de Pergunta (Com Microfone para Perguntar por Voz) */}
+      {/* Campo de Pergunta */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -307,7 +386,9 @@ export const FocusedChatColumn: React.FC = () => {
         <button
           type="button"
           onClick={handleToggleDictation}
-          aria-label={isDictating ? 'Parar ditado por voz' : 'Falar dúvida pelo microfone'}
+          aria-label={
+            isDictating ? 'Parar ditado por voz' : 'Falar dúvida pelo microfone'
+          }
           className={`p-2.5 rounded-xl border cursor-pointer ${
             isDictating ? 'bg-red-600 text-white border-red-600' : ''
           }`}
@@ -340,4 +421,3 @@ export const FocusedChatColumn: React.FC = () => {
     </aside>
   );
 };
-

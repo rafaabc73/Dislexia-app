@@ -16,15 +16,10 @@ export const PlanningSidebar: React.FC = () => {
     showToast,
   } = useApp();
 
-  const [goal, setGoal] = useState('Semana de Provas Bimestrais');
-  const [deadline, setDeadline] = useState('Em 5 dias');
-  const [selectedDiffSubjects, setSelectedDiffSubjects] = useState<string[]>([
-    'matematica',
-    'ciencias',
-  ]);
-  const [examTopics, setExamTopics] = useState(
-    'Frações e Porcentagem (Matemática) e Fotossíntese (Ciências)'
-  );
+  const [goal, setGoal] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [selectedDiffSubjects, setSelectedDiffSubjects] = useState<string[]>([]);
+  const [examTopics, setExamTopics] = useState('');
   const [dailyMinutes, setDailyMinutes] = useState(40);
   const [isGenerating, setIsGenerating] = useState(false);
 

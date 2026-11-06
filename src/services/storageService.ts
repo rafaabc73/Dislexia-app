@@ -119,12 +119,12 @@ export interface FullBackupData {
 
 export async function exportFullBackup(): Promise<string> {
   const settings = loadSettings();
-  const documents = await loadFromStorage<StudyDocument[]>('documents', INITIAL_DOCUMENTS);
-  const artifacts = await loadFromStorage<GeneratedArtifact[]>('artifacts', []);
-  const boardCopies = await loadFromStorage<BoardCopyItem[]>('boardCopies', INITIAL_BOARD_COPIES);
-  const agenda = await loadFromStorage<AgendaItem[]>('agenda', INITIAL_AGENDA);
-  const plans = await loadFromStorage<StudyPlan[]>('plans', []);
-  const corrections = await loadFromStorage<ExamCorrection[]>('corrections', []);
+  const documents = await loadFromStorage<StudyDocument[]>('documents_v2', INITIAL_DOCUMENTS);
+  const artifacts = await loadFromStorage<GeneratedArtifact[]>('artifacts_v2', []);
+  const boardCopies = await loadFromStorage<BoardCopyItem[]>('boardCopies_v2', INITIAL_BOARD_COPIES);
+  const agenda = await loadFromStorage<AgendaItem[]>('agenda_v2', INITIAL_AGENDA);
+  const plans = await loadFromStorage<StudyPlan[]>('plans_v2', []);
+  const corrections = await loadFromStorage<ExamCorrection[]>('corrections_v2', []);
 
   const payload: FullBackupData = {
     version: 1,

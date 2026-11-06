@@ -36,3 +36,4 @@ await esbuild.build({
 });
 
 console.log('Successfully generated standalone dist/app.js for direct index.html opening!');
+

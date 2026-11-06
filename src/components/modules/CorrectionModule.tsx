@@ -306,7 +306,7 @@ export const CorrectionWorkspace: React.FC = () => {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <div
-          className="rounded-2xl p-6 border text-center space-y-4"
+          className="rounded-2xl p-6 border text-center space-y-3"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderColor: 'var(--border-subtle)',
@@ -320,18 +320,11 @@ export const CorrectionWorkspace: React.FC = () => {
             Estude em Cima das Suas Provas e Entenda Seus Erros
           </h1>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            Selecione a matéria e a prova na coluna ao lado (ou clique abaixo
-            para corrigir a Prova de Matemática de exemplo) e escolha entre{' '}
-            <strong>Áudio Explicativo</strong> ou <strong>Formato de Diálogo</strong>!
+            Selecione a matéria e a prova na coluna ao lado e escolha entre{' '}
+            <strong>Áudio Explicativo</strong> ou{' '}
+            <strong>Formato de Diálogo</strong> para iniciar a correção passo a
+            passo.
           </p>
-          <button
-            type="button"
-            onClick={handleQuickDemoCorrection}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-            style={{ backgroundColor: 'var(--brand-primary)' }}
-          >
-            Ver Correção da Prova de Matemática Agora
-          </button>
         </div>
       </div>
     );

@@ -1,14 +1,13 @@
 import { jsPDF } from 'jspdf';
 import { BoardCopyItem } from '../types';
 
-export function generateCleanBoardPdf(item: BoardCopyItem, subjectName: string): void {
+function createBoardJsPdf(item: BoardCopyItem, subjectName: string): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
-  // Cabeçalho limpo sem serifa (Helvetica = sans-serif no PDF padrão)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(37, 99, 235);
@@ -22,7 +21,6 @@ export function generateCleanBoardPdf(item: BoardCopyItem, subjectName: string):
   doc.setDrawColor(203, 213, 225);
   doc.line(18, 34, 192, 34);
 
-  // Bloco Principal do Quadro
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(15, 23, 42);
@@ -66,11 +64,30 @@ export function generateCleanBoardPdf(item: BoardCopyItem, subjectName: string):
     });
   }
 
+  return doc;
+}
+
+export function generateCleanBoardPdf(item: BoardCopyItem, subjectName: string): void {
+  const doc = createBoardJsPdf(item, subjectName);
   const safeFilename = item.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '');
   doc.save(`${safeFilename || 'quadro_organizado'}.pdf`);
+}
+
+export function generateCleanBoardPdfDataUrl(
+  item: BoardCopyItem,
+  subjectName: string
+): { fileName: string; dataUrl: string } {
+  const doc = createBoardJsPdf(item, subjectName);
+  const safeFilename = item.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+  const fileName = `${safeFilename || 'quadro_organizado'}.pdf`;
+  const dataUrl = doc.output('datauristring');
+  return { fileName, dataUrl };
 }
 
 export async function readFileAsDataUrl(file: File): Promise<string> {
@@ -87,8 +104,6 @@ export async function extractBasicTextFromFile(file: File): Promise<string> {
     return await file.text();
   }
   if (file.type === 'application/pdf') {
-    // Leitura básica de strings legíveis caso esteja offline/sem API Key,
-    // enquanto com a API Gemini o próprio binário base64 do PDF é lido nativamente pelo modelo multimodal.
     try {
       const buffer = await file.arrayBuffer();
       const decoder = new TextDecoder('latin1');
@@ -112,4 +127,3 @@ export async function extractBasicTextFromFile(file: File): Promise<string> {
   }
   return `Imagem carregada: "${file.name}". Pronta para análise visual pela Inteligência Artificial.`;
 }
-

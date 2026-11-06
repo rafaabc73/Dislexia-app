@@ -23,6 +23,7 @@ import {
   loadSettings,
   saveSettings,
 } from '../services/storageService';
+import { saveDocumentToComputerDisk } from '../services/fileSystemService';
 
 interface AppContextType {
   activeTab: ActivityTab;
@@ -30,12 +31,15 @@ interface AppContextType {
   mobilePane: MobilePane;
   setMobilePane: (pane: MobilePane) => void;
 
-  // Seleção de Pastas e Documentos
+  // Seleção de Pastas e Documentos (Estilo VS Code: pastas podem ficar todas fechadas)
   selectedYear: string;
   setSelectedYear: (year: string) => void;
+  openSubjectIds: string[];
+  toggleSubjectFolder: (subjectId: string) => void;
+  closeAllFolders: () => void;
   selectedSubjectId: string;
   setSelectedSubjectId: (id: string) => void;
-  selectedMonth: number | null; // null = todos os meses
+  selectedMonth: number | null;
   setSelectedMonth: (month: number | null) => void;
   selectedSubfolder: 'all' | 'month' | 'provas';
   setSelectedSubfolder: (sub: 'all' | 'month' | 'provas') => void;
@@ -46,6 +50,10 @@ interface AppContextType {
   deleteDocument: (id: string) => void;
   selectedDocument: StudyDocument | null;
   setSelectedDocument: (doc: StudyDocument | null) => void;
+
+  // Seleção múltipla de arquivos para as Funções (permite marcar arquivos de meses diferentes)
+  selectedFunctionDocIds: string[];
+  setSelectedFunctionDocIds: React.Dispatch<React.SetStateAction<string[]>>;
 
   // Artefatos gerados nas Funções (NotebookLM + Extras)
   artifacts: GeneratedArtifact[];
@@ -59,6 +67,8 @@ interface AppContextType {
   addBoardCopy: (item: BoardCopyItem) => void;
   activeBoardCopy: BoardCopyItem | null;
   setActiveBoardCopy: (item: BoardCopyItem | null) => void;
+  boardCopyViewMode: 'cards' | 'text';
+  setBoardCopyViewMode: (mode: 'cards' | 'text') => void;
 
   // Módulo Agenda
   agendaItems: AgendaItem[];
@@ -85,10 +95,12 @@ interface AppContextType {
   updateSettings: (partial: Partial<AppSettings>) => void;
   importBackupJson: (jsonStr: string) => Promise<boolean>;
 
-  // Chat Focado (4ª Coluna)
+  // Chat Focado (4ª Coluna) + Estado Minimizado
   chatMessages: ChatMessage[];
   addChatMessage: (msg: ChatMessage) => void;
   clearChat: () => void;
+  isChatMinimized: boolean;
+  setIsChatMinimized: (minimized: boolean) => void;
 
   // Notificação visual rápida
   toastMessage: string | null;
@@ -99,26 +111,26 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
-  const [activeTab, setActiveTab] = useState<ActivityTab>('pastas');
+  const [activeTabState, setActiveTabState] = useState<ActivityTab>('pastas');
   const [mobilePane, setMobilePane] = useState<MobilePane>('workspace');
 
   const [selectedYear, setSelectedYear] = useState<string>(settings.currentSchoolYear);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('ciencias');
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(11);
+  // Todas as pastas começam fechadas por padrão
+  const [openSubjectIds, setOpenSubjectIds] = useState<string[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('portugues');
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedSubfolder, setSelectedSubfolder] = useState<'all' | 'month' | 'provas'>('all');
 
   const [documents, setDocuments] = useState<StudyDocument[]>(INITIAL_DOCUMENTS);
-  const [selectedDocument, setSelectedDocument] = useState<StudyDocument | null>(
-    INITIAL_DOCUMENTS[1]
-  );
+  const [selectedDocument, setSelectedDocument] = useState<StudyDocument | null>(null);
+  const [selectedFunctionDocIds, setSelectedFunctionDocIds] = useState<string[]>([]);
 
   const [artifacts, setArtifacts] = useState<GeneratedArtifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<GeneratedArtifact | null>(null);
 
   const [boardCopies, setBoardCopies] = useState<BoardCopyItem[]>(INITIAL_BOARD_COPIES);
-  const [activeBoardCopy, setActiveBoardCopy] = useState<BoardCopyItem | null>(
-    INITIAL_BOARD_COPIES[0]
-  );
+  const [activeBoardCopy, setActiveBoardCopy] = useState<BoardCopyItem | null>(null);
+  const [boardCopyViewMode, setBoardCopyViewMode] = useState<'cards' | 'text'>('cards');
 
   const [agendaItems, setAgendaItems] = useState<AgendaItem[]>(INITIAL_AGENDA);
   const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
@@ -127,6 +139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [corrections, setCorrections] = useState<ExamCorrection[]>([]);
   const [activeCorrection, setActiveCorrection] = useState<ExamCorrection | null>(null);
 
+  const [isChatMinimized, setIsChatMinimized] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-chat',
@@ -143,28 +156,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage((prev) => (prev === msg ? null : prev));
-    }, 4200);
+    }, 4500);
   };
 
-  // Carregar dados salvos localmente do IndexedDB na inicialização
+  const setActiveTab = (tab: ActivityTab) => {
+    setActiveTabState(tab);
+    // Quando o usuário clicar em Funções, a segunda tela mais à direita fica vazia até ele clicar numa função específica
+    if (tab === 'funcoes') {
+      setActiveArtifact(null);
+    }
+  };
+
+  const toggleSubjectFolder = (subjectId: string) => {
+    setOpenSubjectIds((prev) => {
+      const isOpen = prev.includes(subjectId);
+      const next = isOpen
+        ? prev.filter((id) => id !== subjectId)
+        : [...prev, subjectId];
+      if (!isOpen) {
+        setSelectedSubjectId(subjectId);
+        setSelectedSubfolder('all');
+      } else if (next.length === 0) {
+        // Se fechou a última pasta aberta, limpa o documento selecionado para deixar a 2ª coluna da direita vazia
+        setSelectedDocument(null);
+      } else if (selectedSubjectId === subjectId) {
+        setSelectedSubjectId(next[next.length - 1]);
+      }
+      return next;
+    });
+  };
+
+  const closeAllFolders = () => {
+    setOpenSubjectIds([]);
+    setSelectedDocument(null);
+  };
+
+  // Carregar dados reais do aluno salvos no IndexedDB (sem dados inventados)
   useEffect(() => {
     (async () => {
-      const savedDocs = await loadFromStorage<StudyDocument[]>('documents', INITIAL_DOCUMENTS);
-      const savedArts = await loadFromStorage<GeneratedArtifact[]>('artifacts', []);
-      const savedCopies = await loadFromStorage<BoardCopyItem[]>(
-        'boardCopies',
-        INITIAL_BOARD_COPIES
-      );
-      const savedAgenda = await loadFromStorage<AgendaItem[]>('agenda', INITIAL_AGENDA);
-      const savedPlans = await loadFromStorage<StudyPlan[]>('plans', []);
-      const savedCorrections = await loadFromStorage<ExamCorrection[]>('corrections', []);
+      const savedDocs = await loadFromStorage<StudyDocument[]>('documents_v2', []);
+      const savedArts = await loadFromStorage<GeneratedArtifact[]>('artifacts_v2', []);
+      const savedCopies = await loadFromStorage<BoardCopyItem[]>('boardCopies_v2', []);
+      const savedAgenda = await loadFromStorage<AgendaItem[]>('agenda_v2', []);
+      const savedPlans = await loadFromStorage<StudyPlan[]>('plans_v2', []);
+      const savedCorrections = await loadFromStorage<ExamCorrection[]>('corrections_v2', []);
 
       setDocuments(savedDocs);
-      if (savedDocs.length > 0) {
-        setSelectedDocument(savedDocs[1] || savedDocs[0]);
-      }
       setArtifacts(savedArts);
-      if (savedArts.length > 0) setActiveArtifact(savedArts[0]);
       setBoardCopies(savedCopies);
       if (savedCopies.length > 0) setActiveBoardCopy(savedCopies[0]);
       setAgendaItems(savedAgenda);
@@ -176,7 +214,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })();
   }, []);
 
-  // Aplicar tema claro/escuro no <meta name="color-scheme"> e variáveis de tipografia de dislexia
+  // Aplicar tema claro/escuro no <meta name="color-scheme"> e variáveis de tipografia
   useEffect(() => {
     saveSettings(settings);
     const meta = document.querySelector('meta[name="color-scheme"]');
@@ -204,29 +242,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     root.style.setProperty('--reading-letter-spacing', `${settings.letterSpacing}em`);
   }, [settings]);
 
-  // Persistir alterações após hidratação
+  // Persistir todas as alterações do usuário automaticamente
   useEffect(() => {
-    if (hydrated) saveToStorage('documents', documents);
+    if (hydrated) saveToStorage('documents_v2', documents);
   }, [documents, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveToStorage('artifacts', artifacts);
+    if (hydrated) saveToStorage('artifacts_v2', artifacts);
   }, [artifacts, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveToStorage('boardCopies', boardCopies);
+    if (hydrated) saveToStorage('boardCopies_v2', boardCopies);
   }, [boardCopies, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveToStorage('agenda', agendaItems);
+    if (hydrated) saveToStorage('agenda_v2', agendaItems);
   }, [agendaItems, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveToStorage('plans', studyPlans);
+    if (hydrated) saveToStorage('plans_v2', studyPlans);
   }, [studyPlans, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveToStorage('corrections', corrections);
+    if (hydrated) saveToStorage('corrections_v2', corrections);
   }, [corrections, hydrated]);
 
   const updateSettings = (partial: Partial<AppSettings>) => {
@@ -237,15 +275,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDocuments((prev) => [doc, ...prev]);
     setSelectedYear(doc.year);
     setSelectedSubjectId(doc.subjectId);
+    setOpenSubjectIds((prev) =>
+      prev.includes(doc.subjectId) ? prev : [...prev, doc.subjectId]
+    );
     setSelectedMonth(doc.month);
     setSelectedSubfolder(doc.isExam ? 'provas' : 'month');
     setSelectedDocument(doc);
+    setSelectedFunctionDocIds((prev) =>
+      prev.includes(doc.id) ? prev : [...prev, doc.id]
+    );
+
+    // Salva fisicamente na estrutura de pastas do computador do usuário
+    saveDocumentToComputerDisk(doc);
 
     const subjName =
       FIXED_SUBJECTS.find((s) => s.id === doc.subjectId)?.shortName || doc.subjectId;
     showToast(
-      `Enviado automaticamente para: ${doc.year} ➔ ${subjName} ➔ ${
-        doc.isExam ? 'Subpasta Provas' : `Mês ${doc.month}`
+      `Salvo em Pastas_do_Aluno/${doc.year}/${subjName}/${
+        doc.isExam ? 'Provas' : `Mês ${doc.month}`
       } (${doc.formattedDate})`
     );
   };
@@ -255,16 +302,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (selectedDocument?.id === doc.id) {
       setSelectedDocument(doc);
     }
+    saveDocumentToComputerDisk(doc);
   };
 
   const deleteDocument = (id: string) => {
     setDocuments((prev) => {
       const next = prev.filter((d) => d.id !== id);
       if (selectedDocument?.id === id) {
-        setSelectedDocument(next[0] || null);
+        setSelectedDocument(null);
       }
       return next;
     });
+    setSelectedFunctionDocIds((prev) => prev.filter((docId) => docId !== id));
   };
 
   const addArtifact = (art: GeneratedArtifact) => {
@@ -288,10 +337,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAgendaItems((prev) => [...items, ...prev]);
   };
 
+  // Quando o usuário marcar a tarefa como realizada, ela some imediatamente
   const toggleAgendaItem = (id: string) => {
-    setAgendaItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
-    );
+    setAgendaItems((prev) => prev.filter((item) => item.id !== id));
+    showToast('Tarefa marcada como realizada e concluída!');
   };
 
   const deleteAgendaItem = (id: string) => {
@@ -378,12 +427,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
-        activeTab,
+        activeTab: activeTabState,
         setActiveTab,
         mobilePane,
         setMobilePane,
         selectedYear,
         setSelectedYear,
+        openSubjectIds,
+        toggleSubjectFolder,
+        closeAllFolders,
         selectedSubjectId,
         setSelectedSubjectId,
         selectedMonth,
@@ -396,6 +448,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteDocument,
         selectedDocument,
         setSelectedDocument,
+        selectedFunctionDocIds,
+        setSelectedFunctionDocIds,
         artifacts,
         addArtifact,
         updateArtifact,
@@ -405,6 +459,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addBoardCopy,
         activeBoardCopy,
         setActiveBoardCopy,
+        boardCopyViewMode,
+        setBoardCopyViewMode,
         agendaItems,
         addAgendaItems,
         toggleAgendaItem,
@@ -425,6 +481,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         chatMessages,
         addChatMessage,
         clearChat,
+        isChatMinimized,
+        setIsChatMinimized,
         toastMessage,
         showToast,
       }}
@@ -439,4 +497,3 @@ export const useApp = (): AppContextType => {
   if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
 };
-

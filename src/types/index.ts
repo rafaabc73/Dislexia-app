@@ -101,6 +101,7 @@ export interface BoardCopyItem {
   createdAt: string;
   formattedDate: string;
   imageUrl?: string;
+  imageUrls?: string[];
   transcribedText: string;
   studyCards: Array<{ front: string; back: string }>;
 }
